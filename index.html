@@ -403,6 +403,18 @@
     text-decoration: underline;
     cursor:pointer;
   }
+  .datei-laden-fehler{
+    background: #e8f1f7;
+    border: 1.5px solid var(--mare);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size:12px;
+    color: var(--mare);
+    margin: 10px auto 0;
+    max-width: 320px;
+    text-align:center;
+    display:none;
+  }
 </style>
 </head>
 <body>
@@ -421,7 +433,8 @@
   <div class="stage" id="stage"></div>
 
   <div class="reset-row" id="resetRow"><a id="resetLink">Fortschritt zurücksetzen</a> · <a id="deckLink">Deck wechseln</a></div>
-  <div class="datei-laden-row"><a id="linkVokabelnLaden">Vokabeln laden</a></div>
+  <div class="datei-laden-row"><a id="linkVokabelnLaden">Vokabeln laden</a> · <a id="linkStandardLaden">VocabolarIo laden</a></div>
+  <div class="datei-laden-fehler" id="standardLadenFehler"></div>
 </div>
 
 <script>
@@ -1158,6 +1171,37 @@ let idx = 0;
 let zustand = 0; // 0 = Frage, 1 = Antwort, 2 = Konjugation (nur bei Verben, immer italienisch)
 let punkte = { heute:0 };
 
+// Falls window.storage nicht existiert (z.B. beim Hosting auf GitHub Pages,
+// im Gegensatz zur Claude-Artefakt-Umgebung, wo diese API bereitgestellt wird),
+// bauen wir hier einen Ersatz auf Basis von localStorage. Die Schnittstelle
+// (get/set/delete/list, jeweils async, gleiche Rückgabeform) ist identisch,
+// dadurch merken ladeDatei(), speichereDatei() usw. weiter unten gar nicht,
+// dass sie mit einem Ersatz statt dem Original sprechen.
+if (typeof window.storage === 'undefined') {
+  window.storage = {
+    async get(key){
+      const value = localStorage.getItem(key);
+      return value === null ? null : { key, value };
+    },
+    async set(key, value){
+      localStorage.setItem(key, value);
+      return { key, value };
+    },
+    async delete(key){
+      localStorage.removeItem(key);
+      return { key, deleted: true };
+    },
+    async list(prefix){
+      const keys = [];
+      for(let i = 0; i < localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(!prefix || k.startsWith(prefix)) keys.push(k);
+      }
+      return { keys };
+    }
+  };
+}
+
 const stage = document.getElementById('stage');
 const statsRow = document.getElementById('statsRow');
 const resetRow = document.getElementById('resetRow');
@@ -1383,17 +1427,39 @@ function parseSheet(zeilen){
   return result;
 }
 
+// Sorgt dafür, dass window.XLSX verfügbar ist (lädt SheetJS bei Bedarf nach).
+// Eigene Funktion, weil sowohl der Datei-Upload als auch der GitHub-Import
+// (weiter unten) die Bibliothek brauchen -- so steht das Nachladen nur einmal.
+function ladeSheetJSBibliothek(){
+  return new Promise((resolve, reject) => {
+    if(window.XLSX){ resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('SheetJS-Bibliothek konnte nicht geladen werden.'));
+    document.head.appendChild(script);
+  });
+}
+
+// Gemeinsame Kernlogik: fertiges Workbook (von XLSX.read()) -> Deck-Struktur.
+// Genutzt sowohl vom Datei-Upload (_parseWorkbook) als auch vom GitHub-Import
+// (ladeVocabolarioVonGithub), damit die Umwandlung nur an einer Stelle steht.
+function deckAusWorkbook(wb){
+  const decks = {};
+  for(const blattname of wb.SheetNames){
+    const ws = wb.Sheets[blattname];
+    const zeilen = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    const eintraege = parseSheet(zeilen);
+    if(eintraege.length > 0) decks[blattname] = eintraege;
+  }
+  return decks;
+}
+
 function leseXLSXDatei(file){
   return new Promise((resolve, reject) => {
-    if(window.XLSX){
-      _parseWorkbook(file, resolve, reject);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-      script.onload = () => _parseWorkbook(file, resolve, reject);
-      script.onerror = () => reject(new Error('SheetJS-Bibliothek konnte nicht geladen werden.'));
-      document.head.appendChild(script);
-    }
+    ladeSheetJSBibliothek()
+      .then(() => _parseWorkbook(file, resolve, reject))
+      .catch(reject);
   });
 }
 
@@ -1402,18 +1468,29 @@ function _parseWorkbook(file, resolve, reject){
   reader.onload = e => {
     try{
       const wb = XLSX.read(e.target.result, {type:'array'});
-      const decks = {};
-      for(const blattname of wb.SheetNames){
-        const ws = wb.Sheets[blattname];
-        const zeilen = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-        const eintraege = parseSheet(zeilen);
-        if(eintraege.length > 0) decks[blattname] = eintraege;
-      }
-      resolve(decks);
+      resolve(deckAusWorkbook(wb));
     } catch(err){ reject(err); }
   };
   reader.onerror = () => reject(new Error('Datei konnte nicht gelesen werden.'));
   reader.readAsArrayBuffer(file);
+}
+
+// ---------- VocabolarIo-Datei direkt von GitHub laden ----------
+// Fester Dateiname/Pfad, wie gewünscht: im Repo liegt sie immer als
+// "vocabolario.xlsx" im Root des main-Branchs. raw.githubusercontent.com
+// liefert die Rohdatei (nicht die HTML-Ansichtsseite von github.com) und
+// setzt CORS-Header, die fetch() von einer anderen Domain aus erlauben.
+const VOCABOLARIO_GITHUB_URL = 'https://raw.githubusercontent.com/CB-OS1/vocabolario/main/vocabolario.xlsx';
+
+async function ladeVocabolarioVonGithub(){
+  await ladeSheetJSBibliothek();
+  const res = await fetch(VOCABOLARIO_GITHUB_URL);
+  if(!res.ok){
+    throw new Error('Datei nicht gefunden (Status ' + res.status + '). Liegt "vocabolario.xlsx" im Repo?');
+  }
+  const buffer = await res.arrayBuffer();
+  const wb = XLSX.read(buffer, {type:'array'});
+  return deckAusWorkbook(wb);
 }
 
 async function waehleDeck(name){
@@ -1628,6 +1705,31 @@ document.getElementById('deckLink').onclick = () => {
 
 document.getElementById('linkVokabelnLaden').onclick = () => {
   zeigeUploadScreen();
+};
+
+document.getElementById('linkStandardLaden').onclick = async () => {
+  const link = document.getElementById('linkStandardLaden');
+  const fehlerEl = document.getElementById('standardLadenFehler');
+  fehlerEl.style.display = 'none';
+
+  const textVorher = link.textContent;
+  link.textContent = 'Lädt …';
+  try{
+    const decks = await ladeVocabolarioVonGithub();
+    const namen = Object.keys(decks);
+    if(namen.length === 0){
+      throw new Error('Datei gefunden, aber keine gültigen Arbeitsblätter darin (Spalten "it"/"de" fehlen).');
+    }
+    await loescheAltenFortschritt();
+    await speichereDatei(decks);
+    AKTIVE_DATEI = decks;
+    zeigeDeckAuswahl();
+  } catch(e){
+    fehlerEl.textContent = 'Konnte VocabolarIo nicht laden: ' + e.message;
+    fehlerEl.style.display = 'block';
+  } finally {
+    link.textContent = textVorher;
+  }
 };
 
 (async function init(){
