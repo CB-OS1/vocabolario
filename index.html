@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Vocabolario — Italienisch lernen</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root{
+    --inchiostro: #17324f;     /* dunkles Marineblau, "Tinte" */
+    --carta: #f3f7fb;          /* Papierton, kühles Blauweiß */
+    --mare: #2f6690;           /* Seeblau, starker Akzent (ehem. Terrakotta) */
+    --cielo: #7fb2d6;          /* Himmelblau, ruhiger Kontrast (ehem. Salbeigrün) */
+    --azzurro: #3f8fd1;        /* Azurblau, klarer Akzent (ehem. Senfgold) */
+    --linea: rgba(23,50,79,0.14);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    background: var(--carta);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(31,45,61,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--inchiostro);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100dvh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    overflow-x:hidden;
+  }
+
+  .app{
+    width:100%;
+    max-width:480px;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    padding: 20px 18px 28px;
+  }
+
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom: 6px;
+  }
+  .titel{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+  }
+  .titel em{ color: var(--azzurro); font-style: normal; }
+  .untertitel{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color: var(--inchiostro);
+    opacity:0.55;
+  }
+
+  .stats{
+    display:flex;
+    gap:10px;
+    margin: 14px 0 18px;
+    font-size:12px;
+  }
+  .pill{
+    border:1px solid var(--linea);
+    border-radius:999px;
+    padding:6px 12px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background: rgba(255,255,255,0.4);
+  }
+  .dot{width:7px; height:7px; border-radius:50%;}
+  .dot.cielo{background:var(--cielo);}
+  .dot.mare{background:var(--mare);}
+  .dot.azzurro{background:var(--azzurro);}
+
+  .stage{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    perspective: 1400px;
+  }
+
+  .deck-label{
+    text-align:center;
+    font-size:12px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    opacity:0.5;
+    margin-bottom:10px;
+  }
+
+  .card{
+    position:relative;
+    width:100%;
+    aspect-ratio: 4/5;
+    max-height: 420px;
+    cursor:pointer;
+  }
+
+  .face{
+    position:absolute;
+    inset:0;
+    border-radius: 18px;
+    border: 1.5px solid var(--inchiostro);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 32px 24px;
+    text-align:center;
+    box-shadow: 6px 6px 0 var(--inchiostro);
+    transition: transform 0.35s cubic-bezier(.4,.2,.2,1), opacity 0.25s ease;
+  }
+  .face.front{ background: #f8fbfe; }
+  .face.back, .face.konjugation, .face.notiz{
+    background: var(--inchiostro);
+    color: var(--carta);
+  }
+  .face.eintretend{
+    transform: scale(0.96);
+    opacity: 0;
+  }
+
+  .konj-tabelle{
+    width:100%;
+    max-width:260px;
+    font-size:13px;
+    text-align:left;
+    border-collapse: collapse;
+    margin-top:6px;
+  }
+  .konj-tabelle tr{ border-bottom: 1px solid rgba(246,241,228,0.18); }
+  .konj-tabelle tr:last-child{ border-bottom:none; }
+  .konj-tabelle td{ padding: 5px 4px; }
+  .konj-tabelle td.pron{ opacity:0.55; width:34%; }
+  .konj-tabelle td.form{ font-weight:600; color: var(--azzurro); }
+
+  .kategorie{
+    position:absolute;
+    top:14px;
+    left:16px;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    opacity:0.5;
+  }
+
+  .notiz-badge{
+    position:absolute;
+    top:14px;
+    right:16px;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background: var(--azzurro);
+    color: var(--inchiostro);
+    font-size:11px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .wort{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 36px;
+    line-height:1.1;
+    margin-bottom:10px;
+  }
+  .face.back .wort{ color: var(--azzurro); }
+
+  .artikel{
+    font-size:13px;
+    opacity:0.55;
+    margin-bottom: 18px;
+  }
+
+  .hinweis{
+    font-size:12px;
+    opacity:0.45;
+    position:absolute;
+    bottom:16px;
+  }
+
+  .beispiel{
+    font-size:13px;
+    line-height:1.5;
+    opacity:0.85;
+    font-style:italic;
+    max-width: 90%;
+  }
+
+  .notiz-text{
+    font-size:16px;
+    line-height:1.6;
+    color: var(--azzurro);
+    max-width: 90%;
+    white-space: pre-wrap;
+  }
+
+  /* Zweigeteilte Notiz-Seite: notiz1 immer oben, notiz2 immer unten.
+     flex-direction:column + justify-content:center sorgt dafür, dass bei nur
+     einem gefüllten Feld der Text zentriert bleibt statt an einer Kante zu kleben. */
+  .notiz-doppelt{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    width:100%;
+  }
+  .notiz-abschnitt{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .notiz-trenner{
+    width:50%;
+    height:1px;
+    background: var(--linea);
+  }
+
+  .controls{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+  }
+  button{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--inchiostro);
+    padding: 14px 0;
+    flex:1;
+    cursor:pointer;
+    background:#f8fbfe;
+    color:var(--inchiostro);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 3px 3px 0 var(--inchiostro);
+  }
+  button:active{ transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--inchiostro); }
+
+  .btn-zurueck{ background: #eaf5fb; }
+  .btn-weiter{ background: var(--azzurro); color:#f8fbfe; }
+  button:disabled{ opacity:0.35; cursor:default; }
+  button:disabled:active{ transform:none; box-shadow: 3px 3px 0 var(--inchiostro); }
+
+  .reset-row{
+    text-align:center;
+    margin-top: 18px;
+    font-size:12px;
+  }
+  .reset-row a{
+    color: var(--inchiostro);
+    opacity:0.5;
+    text-decoration: underline;
+    cursor:pointer;
+  }
+
+  .fertig{
+    text-align:center;
+    padding: 40px 10px;
+  }
+  .fertig .wort{ font-size:24px; }
+  .fertig p{ opacity:0.6; font-size:14px; margin: 10px 0 22px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .card{ transition: none; }
+  }
+
+  /* Niveau-Auswahl */
+  .niveau-screen{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    gap: 8px;
+  }
+  .niveau-frage{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .niveau-unter{
+    font-size:13px;
+    opacity:0.55;
+    margin-bottom: 28px;
+    max-width: 280px;
+  }
+  .niveau-optionen{
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+    width: 100%;
+    max-width: 320px;
+  }
+  .niveau-btn{
+    text-align:left;
+    border: 1.5px solid var(--inchiostro);
+    border-radius: 14px;
+    padding: 18px 20px;
+    background: #f8fbfe;
+    cursor:pointer;
+    box-shadow: 4px 4px 0 var(--inchiostro);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .niveau-btn:active{ transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--inchiostro); }
+  .niveau-btn .label{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 20px;
+    display:block;
+  }
+  .niveau-btn .desc{
+    font-size:12px;
+    opacity:0.55;
+    margin-top: 4px;
+    display:block;
+  }
+  .niveau-btn.a1 .label{ color: var(--cielo); }
+  .niveau-btn.a2 .label{ color: var(--mare); }
+  .niveau-wechsel{
+    text-align:center;
+    margin-top: 12px;
+    font-size:12px;
+  }
+  .niveau-wechsel a{
+    color: var(--inchiostro);
+    opacity:0.5;
+    text-decoration: underline;
+    cursor:pointer;
+  }
+
+  /* Upload-Bereich */
+  .upload-zone{
+    border: 2px dashed var(--inchiostro);
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align:center;
+    cursor:pointer;
+    background: rgba(255,255,255,0.3);
+    transition: background 0.15s;
+    position:relative;
+    margin-top: 8px;
+  }
+  .upload-zone:hover, .upload-zone.drag{ background: rgba(255,255,255,0.65); }
+  .upload-zone input[type=file]{
+    position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+  }
+  .upload-icon{ font-size:32px; margin-bottom:6px; }
+  .upload-text{ font-size:13px; opacity:0.6; line-height:1.5; }
+  .upload-text strong{ color: var(--mare); }
+  .upload-fehler{
+    background: #e8f1f7;
+    border: 1.5px solid var(--mare);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size:12px;
+    color: var(--mare);
+    margin-top: 10px;
+    display:none;
+  }
+  .upload-info{
+    font-size:11px;
+    opacity:0.45;
+    margin-top:10px;
+    text-align:center;
+    line-height:1.5;
+  }
+  .niveau-btn.eigene .label{ color: var(--azzurro); }
+
+  /* "Vokabeln laden"-Link, immer zentriert unten, unabhängig vom Zustand */
+  .datei-laden-row{
+    text-align:center;
+    margin-top: 14px;
+    font-size:13px;
+  }
+  .datei-laden-row a{
+    color: var(--inchiostro);
+    opacity:0.55;
+    text-decoration: underline;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="titel">Vocabolar<em>Io</em></div>
+      <div class="untertitel" id="untertitelText">Italienisch</div>
+    </div>
+  </header>
+
+  <div class="stats" id="statsRow">
+    <div class="pill"><span class="dot azzurro"></span><span id="statHeute">0</span> Karten heute</div>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="reset-row" id="resetRow"><a id="resetLink">Fortschritt zurücksetzen</a> · <a id="deckLink">Deck wechseln</a></div>
+  <div class="datei-laden-row"><a id="linkVokabelnLaden">Vokabeln laden</a></div>
+</div>
+
+<script>
+// ---------- Konjugator (Presente Indicativo) ----------
+const PRONOMEN = ["io","tu","lui/lei","noi","voi","loro"];
+
+const IRREGOLARI = {
+  essere:      ["sono","sei","è","siamo","siete","sono"],
+  avere:       ["ho","hai","ha","abbiamo","avete","hanno"],
+  andare:      ["vado","vai","va","andiamo","andate","vanno"],
+  fare:        ["faccio","fai","fa","facciamo","fate","fanno"],
+  stare:       ["sto","stai","sta","stiamo","state","stanno"],
+  dare:        ["do","dai","dà","diamo","date","danno"],
+  dire:        ["dico","dici","dice","diciamo","dite","dicono"],
+  dovere:      ["devo","devi","deve","dobbiamo","dovete","devono"],
+  potere:      ["posso","puoi","può","possiamo","potete","possono"],
+  volere:      ["voglio","vuoi","vuole","vogliamo","volete","vogliono"],
+  sapere:      ["so","sai","sa","sappiamo","sapete","sanno"],
+  venire:      ["vengo","vieni","viene","veniamo","venite","vengono"],
+  uscire:      ["esco","esci","esce","usciamo","uscite","escono"],
+  bere:        ["bevo","bevi","beve","beviamo","bevete","bevono"],
+  prendere:    ["prendo","prendi","prende","prendiamo","prendete","prendono"],
+  mettere:     ["metto","metti","mette","mettiamo","mettete","mettono"],
+  chiudere:    ["chiudo","chiudi","chiude","chiudiamo","chiudete","chiudono"],
+  rispondere:  ["rispondo","rispondi","risponde","rispondiamo","rispondete","rispondono"],
+  aprire:      ["apro","apri","apre","apriamo","aprite","aprono"],
+  offrire:     ["offro","offri","offre","offriamo","offrite","offrono"],
+  tradurre:    ["traduco","traduci","traduce","traduciamo","traducete","traducono"],
+  scegliere:   ["scelgo","scegli","sceglie","scegliamo","scegliete","scelgono"],
+  rimanere:    ["rimango","rimani","rimane","rimaniamo","rimanete","rimangono"],
+  salire:      ["salgo","sali","sale","saliamo","salite","salgono"],
+  tenere:      ["tengo","tieni","tiene","teniamo","tenete","tengono"],
+  spegnere:    ["spengo","spegni","spegne","spegniamo","spegnete","spengono"],
+  accendere:   ["accendo","accendi","accende","accendiamo","accendete","accendono"],
+  nascere:     ["nasco","nasci","nasce","nasciamo","nascete","nascono"],
+  morire:      ["muoio","muori","muore","moriamo","morite","muoiono"],
+  piacere:     ["piaccio","piaci","piace","piacciamo","piacete","piacciono"],
+  succedere:   ["succedo","succedi","succede","succediamo","succedete","succedono"],
+  decidere:    ["decido","decidi","decide","decidiamo","decidete","decidono"],
+  muovere:     ["muovo","muovi","muove","muoviamo","muovete","muovono"],
+  riempire:    ["riempio","riempi","riempie","riempiamo","riempite","riempiono"],
+  porre:       ["pongo","poni","pone","poniamo","ponete","pongono"],
+  trarre:      ["traggo","trai","trae","traiamo","traete","traggono"],
+  produrre:    ["produco","produci","produce","produciamo","producete","producono"],
+  condurre:    ["conduco","conduci","conduce","conduciamo","conducete","conducono"],
+  cogliere:    ["colgo","cogli","coglie","cogliamo","cogliete","colgono"],
+  togliere:    ["tolgo","togli","toglie","togliamo","togliete","tolgono"],
+  sedere:      ["siedo","siedi","siede","sediamo","sedete","siedono"],
+  valere:      ["valgo","vali","vale","valiamo","valete","valgono"],
+  udire:       ["odo","odi","ode","udiamo","udite","odono"],
+  sciogliere:  ["sciolgo","sciogli","scioglie","sciogliamo","sciogliete","sciolgono"],
+  comporre:    ["compongo","componi","compone","componiamo","componete","compongono"],
+  disporre:    ["dispongo","disponi","dispone","disponiamo","disponete","dispongono"],
+  proporre:    ["propongo","proponi","propone","proponiamo","proponete","propongono"],
+  dedurre:     ["deduco","deduci","deduce","deduciamo","deducete","deducono"],
+  ridurre:     ["riduco","riduci","riduce","riduciamo","riducete","riducono"],
+};
+
+// Verben, die im Presente das Einschub-Infix "-isc-" verwenden (io capISCo, nicht *capo).
+// Bei -ire-Verben lässt sich das nicht aus der Endung ableiten (dormire vs. capire sehen
+// von der Endung her identisch aus) — deshalb eine explizite Positivliste. Nicht
+// erschöpfend, aber deckt die gebräuchlichsten Fälle ab; bei Bedarf einfach ergänzen.
+const ISC_VERBEN = new Set([
+  "capire","finire","preferire","pulire","costruire","agire","guarire","punire",
+  "spedire","garantire","stabilire","suggerire","proibire","impedire","gestire",
+  "ferire","colpire","unire","restituire","fornire","trasferire","inserire",
+  "obbedire","sostituire","tradire","definire","esaurire","smaltire","custodire",
+  "chiarire","condire","digerire","favorire","istruire","riferire","rapire",
+  "scandire","sparire","starnutire","guarnire","abolire","arrossire","bandire",
+  "compatire","concepire","contribuire","demolire","diminuire","disubbidire",
+  "esibire","fallire","fiorire","impazzire","impallidire","indebolire","intuire",
+  "istituire","munire","percepire","reagire","riunire","scolpire","smentire",
+  "stupire","svanire","tossire"
+]);
+
+// Vorbereitete Beispielsätze für die 500 wichtigsten Verben (siehe vocabolario_500_verben.xlsx).
+// gibBeispiel() schaut hier zuerst nach, bevor es auf das generische Template zurückfällt.
+const BEISPIELSAETZE = {
+  accorgersi: { satz_it: "Mi accorgo dell'errore troppo tardi.", satz_de: "Ich bemerke den Fehler zu spät." },
+  sembrare: { satz_it: "Il tempo sembra migliorare oggi.", satz_de: "Das Wetter scheint sich heute zu bessern." },
+  capitare: { satz_it: "Capita un imprevisto all'ultimo momento.", satz_de: "In letzter Minute passiert ein Zwischenfall." },
+  essere: { satz_it: "Lei è molto gentile con tutti.", satz_de: "Sie ist sehr freundlich zu allen." },
+  avere: { satz_it: "Noi abbiamo due gatti a casa.", satz_de: "Wir haben zwei Katzen zu Hause." },
+  fare: { satz_it: "Tu fai sempre troppe domande.", satz_de: "Du stellst immer zu viele Fragen." },
+  andare: { satz_it: "Loro vanno al mercato ogni sabato.", satz_de: "Sie gehen jeden Samstag auf den Markt." },
+  dire: { satz_it: "Lui dice la verità a tutti.", satz_de: "Er sagt allen die Wahrheit." },
+  dare: { satz_it: "Io do un regalo a mia sorella.", satz_de: "Ich gebe meiner Schwester ein Geschenk." },
+  stare: { satz_it: "Come stai oggi?", satz_de: "Wie geht es dir heute?" },
+  dovere: { satz_it: "Devo finire questo lavoro entro sera.", satz_de: "Ich muss diese Arbeit bis zum Abend beenden." },
+  potere: { satz_it: "Puoi aiutarmi con la valigia?", satz_de: "Kannst du mir mit dem Koffer helfen?" },
+  volere: { satz_it: "Voglio imparare l'italiano quest'anno.", satz_de: "Ich will dieses Jahr Italienisch lernen." },
+  sapere: { satz_it: "Non so dove sia il mio ombrello.", satz_de: "Ich weiß nicht, wo mein Regenschirm ist." },
+  venire: { satz_it: "Vieni con noi al cinema stasera?", satz_de: "Kommst du heute Abend mit uns ins Kino?" },
+  uscire: { satz_it: "Usciamo insieme dopo cena.", satz_de: "Wir gehen nach dem Abendessen zusammen aus." },
+  bere: { satz_it: "Bevo un caffè ogni mattina.", satz_de: "Ich trinke jeden Morgen einen Kaffee." },
+  tenere: { satz_it: "Tieni la porta aperta, per favore.", satz_de: "Halt bitte die Tür offen." },
+  tradurre: { satz_it: "Lei traduce libri dall'inglese.", satz_de: "Sie übersetzt Bücher aus dem Englischen." },
+  scegliere: { satz_it: "Scelgo sempre il piatto più semplice.", satz_de: "Ich wähle immer das einfachste Gericht." },
+  rimanere: { satz_it: "Rimaniamo a casa questo weekend.", satz_de: "Wir bleiben dieses Wochenende zu Hause." },
+  salire: { satz_it: "Saliamo sull'autobus alla prossima fermata.", satz_de: "Wir steigen an der nächsten Haltestelle in den Bus." },
+  spegnere: { satz_it: "Spegni la luce prima di uscire.", satz_de: "Schalte das Licht aus, bevor du gehst." },
+  accendere: { satz_it: "Accendo il computer ogni mattina.", satz_de: "Ich schalte jeden Morgen den Computer ein." },
+  nascere: { satz_it: "Mio figlio è nato a marzo.", satz_de: "Mein Sohn ist im März geboren." },
+  morire: { satz_it: "L'attore è morto l'anno scorso.", satz_de: "Der Schauspieler ist letztes Jahr gestorben." },
+  piacere: { satz_it: "Mi piace molto questa canzone.", satz_de: "Mir gefällt dieses Lied sehr." },
+  succedere: { satz_it: "Cosa succede in questo quartiere?", satz_de: "Was passiert in diesem Viertel?" },
+  decidere: { satz_it: "Decidiamo insieme dove andare in vacanza.", satz_de: "Wir entscheiden gemeinsam, wohin wir in den Urlaub fahren." },
+  muovere: { satz_it: "Non muovere la sedia, per favore.", satz_de: "Beweg den Stuhl bitte nicht." },
+  riempire: { satz_it: "Riempio il bicchiere d'acqua.", satz_de: "Ich fülle das Glas mit Wasser." },
+  porre: { satz_it: "Ti pongo una domanda importante.", satz_de: "Ich stelle dir eine wichtige Frage." },
+  trarre: { satz_it: "Traggo una conclusione dai fatti.", satz_de: "Ich ziehe eine Schlussfolgerung aus den Fakten." },
+  produrre: { satz_it: "L'azienda produce mobili in legno.", satz_de: "Die Firma produziert Möbel aus Holz." },
+  condurre: { satz_it: "Lui conduce una trasmissione radiofonica.", satz_de: "Er moderiert eine Radiosendung." },
+  cogliere: { satz_it: "Colgo l'occasione per ringraziarti.", satz_de: "Ich nutze die Gelegenheit, um dir zu danken." },
+  togliere: { satz_it: "Togli le scarpe prima di entrare.", satz_de: "Zieh die Schuhe aus, bevor du reinkommst." },
+  sedersi: { satz_it: "Ci sediamo vicino alla finestra.", satz_de: "Wir setzen uns ans Fenster." },
+  valere: { satz_it: "Questo quadro vale molto denaro.", satz_de: "Dieses Gemälde ist viel Geld wert." },
+  udire: { satz_it: "Udiamo dei rumori strani dal tetto.", satz_de: "Wir hören seltsame Geräusche vom Dach." },
+  sciogliere: { satz_it: "Il sole scioglie la neve in montagna.", satz_de: "Die Sonne schmilzt den Schnee in den Bergen." },
+  prendere: { satz_it: "Prendo il treno delle otto.", satz_de: "Ich nehme den Zug um acht Uhr." },
+  mettere: { satz_it: "Metto i piatti sul tavolo.", satz_de: "Ich stelle die Teller auf den Tisch." },
+  chiudere: { satz_it: "Chiudiamo il negozio alle sette.", satz_de: "Wir schließen den Laden um sieben." },
+  rispondere: { satz_it: "Rispondo subito alla tua email.", satz_de: "Ich antworte sofort auf deine E-Mail." },
+  aprire: { satz_it: "Apro la finestra per far entrare aria.", satz_de: "Ich öffne das Fenster, um frische Luft reinzulassen." },
+  offrire: { satz_it: "Ti offro un caffè volentieri.", satz_de: "Ich lade dich gern auf einen Kaffee ein." },
+  coprire: { satz_it: "Copro il divano con una coperta.", satz_de: "Ich decke das Sofa mit einer Decke zu." },
+  soffrire: { satz_it: "Soffre molto per il freddo.", satz_de: "Er/Sie leidet sehr unter der Kälte." },
+  permettere: { satz_it: "I miei genitori non mi permettono di uscire tardi.", satz_de: "Meine Eltern erlauben mir nicht, spät auszugehen." },
+  promettere: { satz_it: "Ti prometto di chiamarti domani.", satz_de: "Ich verspreche dir, dich morgen anzurufen." },
+  comporre: { satz_it: "Il musicista compone una nuova canzone.", satz_de: "Der Musiker komponiert ein neues Lied." },
+  disporre: { satz_it: "L'ufficio dispone di poco personale.", satz_de: "Das Büro verfügt über wenig Personal." },
+  proporre: { satz_it: "Propongo di partire domani mattina.", satz_de: "Ich schlage vor, morgen früh abzureisen." },
+  apparire: { satz_it: "Improvvisamente appare una figura nel buio.", satz_de: "Plötzlich erscheint eine Gestalt im Dunkeln." },
+  scomparire: { satz_it: "Il gatto scompare ogni pomeriggio.", satz_de: "Die Katze verschwindet jeden Nachmittag." },
+  sorridere: { satz_it: "Il bambino sorride alla nonna.", satz_de: "Das Kind lächelt die Großmutter an." },
+  ridere: { satz_it: "Ridiamo sempre ai suoi scherzi.", satz_de: "Wir lachen immer über seine Witze." },
+  piangere: { satz_it: "Il neonato piange di notte.", satz_de: "Das Baby weint nachts." },
+  vincere: { satz_it: "La squadra vince la partita.", satz_de: "Die Mannschaft gewinnt das Spiel." },
+  perdere: { satz_it: "Perdo sempre le chiavi di casa.", satz_de: "Ich verliere immer die Hausschlüssel." },
+  vedere: { satz_it: "Vedo il mare dalla finestra.", satz_de: "Ich sehe das Meer vom Fenster aus." },
+  leggere: { satz_it: "Leggo un libro prima di dormire.", satz_de: "Ich lese ein Buch, bevor ich schlafe." },
+  scrivere: { satz_it: "Scrivo una lettera ai miei nonni.", satz_de: "Ich schreibe meinen Großeltern einen Brief." },
+  vivere: { satz_it: "Viviamo in una piccola città.", satz_de: "Wir leben in einer kleinen Stadt." },
+  credere: { satz_it: "Credo che tu abbia ragione.", satz_de: "Ich glaube, dass du recht hast." },
+  ricevere: { satz_it: "Ricevo un pacco ogni settimana.", satz_de: "Ich bekomme jede Woche ein Paket." },
+  parlare: { satz_it: "Parlo italiano da tre anni.", satz_de: "Ich spreche seit drei Jahren Italienisch." },
+  mangiare: { satz_it: "Mangiamo insieme ogni domenica.", satz_de: "Wir essen jeden Sonntag zusammen." },
+  abitare: { satz_it: "Abito in centro città.", satz_de: "Ich wohne im Stadtzentrum." },
+  lavorare: { satz_it: "Lavoro in un ufficio moderno.", satz_de: "Ich arbeite in einem modernen Büro." },
+  studiare: { satz_it: "Studio medicina all'università.", satz_de: "Ich studiere Medizin an der Universität." },
+  guardare: { satz_it: "Guardiamo un film stasera.", satz_de: "Wir schauen heute Abend einen Film." },
+  ascoltare: { satz_it: "Ascolto musica mentre cucino.", satz_de: "Ich höre Musik, während ich koche." },
+  camminare: { satz_it: "Cammino ogni giorno nel parco.", satz_de: "Ich gehe jeden Tag im Park spazieren." },
+  comprare: { satz_it: "Compro il pane fresco ogni mattina.", satz_de: "Ich kaufe jeden Morgen frisches Brot." },
+  chiamare: { satz_it: "Ti chiamo appena arrivo a casa.", satz_de: "Ich rufe dich an, sobald ich zu Hause bin." },
+  aiutare: { satz_it: "Aiuto mia madre in cucina.", satz_de: "Ich helfe meiner Mutter in der Küche." },
+  cucinare: { satz_it: "Cucino la pasta per gli amici.", satz_de: "Ich koche Pasta für die Freunde." },
+  giocare: { satz_it: "I bambini giocano nel giardino.", satz_de: "Die Kinder spielen im Garten." },
+  cercare: { satz_it: "Cerco le chiavi da un'ora.", satz_de: "Ich suche seit einer Stunde die Schlüssel." },
+  trovare: { satz_it: "Trovo sempre parcheggio vicino a casa.", satz_de: "Ich finde immer einen Parkplatz in der Nähe." },
+  arrivare: { satz_it: "Il treno arriva alle nove.", satz_de: "Der Zug kommt um neun Uhr an." },
+  tornare: { satz_it: "Torniamo dalle vacanze domenica.", satz_de: "Wir kommen am Sonntag aus dem Urlaub zurück." },
+  amare: { satz_it: "Amo la mia famiglia sopra ogni cosa.", satz_de: "Ich liebe meine Familie über alles." },
+  pagare: { satz_it: "Pago il conto con la carta.", satz_de: "Ich bezahle die Rechnung mit Karte." },
+  ballare: { satz_it: "Balliamo tutta la notte alla festa.", satz_de: "Wir tanzen die ganze Nacht auf der Party." },
+  cantare: { satz_it: "Lei canta molto bene.", satz_de: "Sie singt sehr gut." },
+  entrare: { satz_it: "Entriamo nel museo alle dieci.", satz_de: "Wir gehen um zehn Uhr ins Museum." },
+  aspettare: { satz_it: "Aspetto l'autobus da venti minuti.", satz_de: "Ich warte seit zwanzig Minuten auf den Bus." },
+  ricordare: { satz_it: "Ricordo ancora il nostro primo viaggio.", satz_de: "Ich erinnere mich noch an unsere erste Reise." },
+  imparare: { satz_it: "Imparo una nuova parola ogni giorno.", satz_de: "Ich lerne jeden Tag ein neues Wort." },
+  incontrare: { satz_it: "Incontro un amico al bar.", satz_de: "Ich treffe einen Freund in der Bar." },
+  domandare: { satz_it: "Domando informazioni al passante.", satz_de: "Ich frage einen Passanten nach Informationen." },
+  organizzare: { satz_it: "Organizziamo una festa a sorpresa.", satz_de: "Wir organisieren eine Überraschungsparty." },
+  preparare: { satz_it: "Preparo la valigia per il viaggio.", satz_de: "Ich packe den Koffer für die Reise." },
+  spiegare: { satz_it: "L'insegnante spiega la lezione con calma.", satz_de: "Der Lehrer erklärt die Lektion in Ruhe." },
+  provare: { satz_it: "Provo questo vestito nuovo.", satz_de: "Ich probiere dieses neue Kleid an." },
+  controllare: { satz_it: "Controllo la posta ogni mattina.", satz_de: "Ich kontrolliere jeden Morgen die Post." },
+  cambiare: { satz_it: "Cambio idea molto spesso.", satz_de: "Ich ändere sehr oft meine Meinung." },
+  continuare: { satz_it: "Continuiamo il lavoro dopo pranzo.", satz_de: "Wir setzen die Arbeit nach dem Mittagessen fort." },
+  cominciare: { satz_it: "La lezione comincia alle nove.", satz_de: "Der Unterricht beginnt um neun Uhr." },
+  raccontare: { satz_it: "Mio nonno racconta storie interessanti.", satz_de: "Mein Großvater erzählt interessante Geschichten." },
+  ringraziare: { satz_it: "Ti ringrazio per il tuo aiuto.", satz_de: "Ich danke dir für deine Hilfe." },
+  invitare: { satz_it: "Invitiamo tutti gli amici alla festa.", satz_de: "Wir laden alle Freunde zur Party ein." },
+  regalare: { satz_it: "Le regalo dei fiori per il compleanno.", satz_de: "Ich schenke ihr Blumen zum Geburtstag." },
+  indossare: { satz_it: "Indosso un cappotto pesante d'inverno.", satz_de: "Ich trage im Winter einen dicken Mantel." },
+  guadagnare: { satz_it: "Guadagna bene con il suo lavoro.", satz_de: "Er/Sie verdient gut mit seiner/ihrer Arbeit." },
+  risparmiare: { satz_it: "Risparmiamo per comprare una casa.", satz_de: "Wir sparen, um ein Haus zu kaufen." },
+  affittare: { satz_it: "Affittiamo un appartamento al mare.", satz_de: "Wir mieten eine Wohnung am Meer." },
+  noleggiare: { satz_it: "Noleggio una macchina per il weekend.", satz_de: "Ich leihe mir übers Wochenende ein Auto." },
+  immaginare: { satz_it: "Immagino un futuro migliore.", satz_de: "Ich stelle mir eine bessere Zukunft vor." },
+  paragonare: { satz_it: "Paragono i prezzi prima di comprare.", satz_de: "Ich vergleiche die Preise, bevor ich kaufe." },
+  disturbare: { satz_it: "Scusa se ti disturbo a quest'ora.", satz_de: "Entschuldige, wenn ich dich zu dieser Zeit störe." },
+  riposare: { satz_it: "Riposo un po' dopo pranzo.", satz_de: "Ich ruhe mich nach dem Mittagessen etwas aus." },
+  svegliarsi: { satz_it: "Mi sveglio presto ogni mattina.", satz_de: "Ich wache jeden Morgen früh auf." },
+  vestirsi: { satz_it: "Mi vesto velocemente la mattina.", satz_de: "Ich ziehe mich morgens schnell an." },
+  lavarsi: { satz_it: "Mi lavo le mani prima di mangiare.", satz_de: "Ich wasche mir vor dem Essen die Hände." },
+  alzarsi: { satz_it: "Ci alziamo alle sette ogni giorno.", satz_de: "Wir stehen jeden Tag um sieben auf." },
+  addormentarsi: { satz_it: "Mi addormento subito la sera.", satz_de: "Ich schlafe abends sofort ein." },
+  truccarsi: { satz_it: "Si trucca prima di uscire.", satz_de: "Sie schminkt sich, bevor sie ausgeht." },
+  pettinarsi: { satz_it: "Mi pettino davanti allo specchio.", satz_de: "Ich kämme mich vor dem Spiegel." },
+  radersi: { satz_it: "Mio padre si rade ogni mattina.", satz_de: "Mein Vater rasiert sich jeden Morgen." },
+  fermarsi: { satz_it: "L'autobus si ferma davanti alla scuola.", satz_de: "Der Bus hält vor der Schule." },
+  innamorarsi: { satz_it: "Si innamora facilmente.", satz_de: "Er/Sie verliebt sich leicht." },
+  sposarsi: { satz_it: "Si sposano il prossimo giugno.", satz_de: "Sie heiraten im nächsten Juni." },
+  divorziare: { satz_it: "Dopo dieci anni decidono di divorziare.", satz_de: "Nach zehn Jahren beschließen sie, sich scheiden zu lassen." },
+  trasferirsi: { satz_it: "Ci trasferiamo in un'altra città.", satz_de: "Wir ziehen in eine andere Stadt um." },
+  ambientarsi: { satz_it: "Mi ambiento facilmente in posti nuovi.", satz_de: "Ich gewöhne mich leicht an neue Orte." },
+  dormire: { satz_it: "Dormo otto ore ogni notte.", satz_de: "Ich schlafe jede Nacht acht Stunden." },
+  partire: { satz_it: "Il volo parte alle sei del mattino.", satz_de: "Der Flug startet um sechs Uhr morgens." },
+  sentire: { satz_it: "Sento un rumore strano in cucina.", satz_de: "Ich höre ein seltsames Geräusch in der Küche." },
+  seguire: { satz_it: "Seguo un corso di cucina il martedì.", satz_de: "Ich mache dienstags einen Kochkurs mit." },
+  vestire: { satz_it: "La madre veste il bambino in fretta.", satz_de: "Die Mutter zieht das Kind schnell an." },
+  sentirsi: { satz_it: "Mi sento stanco oggi.", satz_de: "Ich fühle mich heute müde." },
+  divertirsi: { satz_it: "Ci divertiamo molto alla festa.", satz_de: "Wir amüsieren uns sehr auf der Party." },
+  annoiarsi: { satz_it: "Mi annoio quando piove.", satz_de: "Ich langweile mich, wenn es regnet." },
+  preoccuparsi: { satz_it: "Non ti preoccupare per me.", satz_de: "Mach dir keine Sorgen um mich." },
+  arrabbiarsi: { satz_it: "Si arrabbia facilmente per piccole cose.", satz_de: "Er/Sie ärgert sich leicht über Kleinigkeiten." },
+  capire: { satz_it: "Capisco questa lezione senza problemi.", satz_de: "Ich verstehe diese Lektion ohne Probleme." },
+  finire: { satz_it: "Finisco il lavoro entro le sei.", satz_de: "Ich beende die Arbeit bis sechs Uhr." },
+  preferire: { satz_it: "Preferisco il tè al caffè.", satz_de: "Ich bevorzuge Tee gegenüber Kaffee." },
+  pulire: { satz_it: "Pulisco la casa ogni sabato.", satz_de: "Ich putze das Haus jeden Samstag." },
+  costruire: { satz_it: "L'azienda costruisce case ecologiche.", satz_de: "Die Firma baut ökologische Häuser." },
+  agire: { satz_it: "Dobbiamo agire subito.", satz_de: "Wir müssen sofort handeln." },
+  guarire: { satz_it: "Guarisco velocemente dai raffreddori.", satz_de: "Ich erhole mich schnell von Erkältungen." },
+  punire: { satz_it: "Il maestro punisce raramente gli alunni.", satz_de: "Der Lehrer bestraft die Schüler selten." },
+  spedire: { satz_it: "Spedisco il pacco domani mattina.", satz_de: "Ich verschicke das Paket morgen früh." },
+  garantire: { satz_it: "Il negozio garantisce la qualità del prodotto.", satz_de: "Das Geschäft garantiert die Qualität des Produkts." },
+  stabilire: { satz_it: "Stabiliamo una data per l'incontro.", satz_de: "Wir legen ein Datum für das Treffen fest." },
+  suggerire: { satz_it: "Ti suggerisco di prenotare in anticipo.", satz_de: "Ich empfehle dir, im Voraus zu buchen." },
+  proibire: { satz_it: "Il regolamento proibisce di fumare qui.", satz_de: "Die Vorschrift verbietet hier das Rauchen." },
+  impedire: { satz_it: "La pioggia impedisce la partita.", satz_de: "Der Regen verhindert das Spiel." },
+  gestire: { satz_it: "Gestisco un piccolo negozio di famiglia.", satz_de: "Ich leite ein kleines Familiengeschäft." },
+  ferire: { satz_it: "L'incidente ferisce due passeggeri.", satz_de: "Der Unfall verletzt zwei Passagiere." },
+  colpire: { satz_it: "Il fulmine colpisce l'albero.", satz_de: "Der Blitz trifft den Baum." },
+  unire: { satz_it: "La musica unisce le persone.", satz_de: "Musik verbindet Menschen." },
+  restituire: { satz_it: "Restituisco il libro alla biblioteca.", satz_de: "Ich gebe das Buch in der Bibliothek zurück." },
+  fornire: { satz_it: "L'azienda fornisce materiali edili.", satz_de: "Die Firma liefert Baumaterialien." },
+  trasferire: { satz_it: "Trasferisco i dati sul nuovo computer.", satz_de: "Ich übertrage die Daten auf den neuen Computer." },
+  inserire: { satz_it: "Inserisco la password per accedere.", satz_de: "Ich gebe das Passwort ein, um mich anzumelden." },
+  obbedire: { satz_it: "Il cane obbedisce ai comandi.", satz_de: "Der Hund gehorcht den Befehlen." },
+  sostituire: { satz_it: "Sostituisco la lampadina rotta.", satz_de: "Ich ersetze die kaputte Glühbirne." },
+  tradire: { satz_it: "Non tradisco mai i miei amici.", satz_de: "Ich verrate niemals meine Freunde." },
+  definire: { satz_it: "Il dizionario definisce ogni parola.", satz_de: "Das Wörterbuch definiert jedes Wort." },
+  esaurire: { satz_it: "Esauriamo le scorte prima di fine mese.", satz_de: "Wir verbrauchen die Vorräte vor Monatsende." },
+  smaltire: { satz_it: "Il comune smaltisce i rifiuti ogni martedì.", satz_de: "Die Gemeinde entsorgt den Müll jeden Dienstag." },
+  custodire: { satz_it: "Custodisco questi documenti con cura.", satz_de: "Ich bewahre diese Dokumente sorgfältig auf." },
+  chiarire: { satz_it: "Vorrei chiarire un malinteso.", satz_de: "Ich möchte ein Missverständnis klären." },
+  condire: { satz_it: "Condisco l'insalata con olio e limone.", satz_de: "Ich würze den Salat mit Öl und Zitrone." },
+  digerire: { satz_it: "Non digerisco bene i cibi fritti.", satz_de: "Ich vertrage frittierte Speisen nicht gut." },
+  favorire: { satz_it: "Il clima favorisce la crescita delle piante.", satz_de: "Das Klima begünstigt das Wachstum der Pflanzen." },
+  istruire: { satz_it: "Il tecnico istruisce i nuovi dipendenti.", satz_de: "Der Techniker weist die neuen Mitarbeiter ein." },
+  riferire: { satz_it: "Riferisco tutto al direttore.", satz_de: "Ich berichte dem Direktor alles." },
+  rapire: { satz_it: "Nel film i banditi rapiscono un ostaggio.", satz_de: "Im Film entführen die Banditen eine Geisel." },
+  sparire: { satz_it: "Le nuvole spariscono verso sera.", satz_de: "Die Wolken verschwinden gegen Abend." },
+  starnutire: { satz_it: "Starnutisco spesso in primavera.", satz_de: "Ich niese im Frühling oft." },
+  abolire: { satz_it: "Il governo abolisce la vecchia tassa.", satz_de: "Die Regierung schafft die alte Steuer ab." },
+  arrossire: { satz_it: "Arrossisce ogni volta che parla in pubblico.", satz_de: "Er/Sie errötet jedes Mal, wenn er/sie in der Öffentlichkeit spricht." },
+  contribuire: { satz_it: "Ognuno contribuisce con un'idea diversa.", satz_de: "Jeder trägt mit einer anderen Idee bei." },
+  demolire: { satz_it: "Demoliscono il vecchio edificio la prossima settimana.", satz_de: "Sie reißen nächste Woche das alte Gebäude ab." },
+  diminuire: { satz_it: "I prezzi diminuiscono in inverno.", satz_de: "Die Preise sinken im Winter." },
+  fallire: { satz_it: "Il progetto fallisce per mancanza di fondi.", satz_de: "Das Projekt scheitert aus Geldmangel." },
+  fiorire: { satz_it: "Gli alberi fioriscono in aprile.", satz_de: "Die Bäume blühen im April." },
+  impazzire: { satz_it: "Impazzisco per il caos in questa città.", satz_de: "Ich werde verrückt wegen des Chaos in dieser Stadt." },
+  indebolire: { satz_it: "La malattia indebolisce il paziente.", satz_de: "Die Krankheit schwächt den Patienten." },
+  intuire: { satz_it: "Intuisco subito le sue intenzioni.", satz_de: "Ich erahne sofort seine/ihre Absichten." },
+  istituire: { satz_it: "L'università istituisce un nuovo corso di laurea.", satz_de: "Die Universität richtet einen neuen Studiengang ein." },
+  percepire: { satz_it: "Percepisco un cambiamento nel suo umore.", satz_de: "Ich nehme eine Veränderung in seiner/ihrer Stimmung wahr." },
+  reagire: { satz_it: "Reagisco male alle critiche ingiuste.", satz_de: "Ich reagiere schlecht auf ungerechte Kritik." },
+  riunire: { satz_it: "Riunisco tutta la famiglia a Natale.", satz_de: "Ich versammle die ganze Familie zu Weihnachten." },
+  scolpire: { satz_it: "L'artista scolpisce una statua di marmo.", satz_de: "Der Künstler meißelt eine Marmorstatue." },
+  smentire: { satz_it: "Il politico smentisce le voci.", satz_de: "Der Politiker dementiert die Gerüchte." },
+  stupire: { satz_it: "Il suo talento stupisce tutti.", satz_de: "Sein/Ihr Talent erstaunt alle." },
+  svanire: { satz_it: "La paura svanisce col tempo.", satz_de: "Die Angst schwindet mit der Zeit." },
+  tossire: { satz_it: "Tossisco da qualche giorno.", satz_de: "Ich huste seit einigen Tagen." },
+  correre: { satz_it: "Corro ogni mattina nel parco.", satz_de: "Ich laufe jeden Morgen im Park." },
+  cadere: { satz_it: "Il bambino cade e si fa male.", satz_de: "Das Kind fällt und verletzt sich." },
+  chiedere: { satz_it: "Chiedo scusa per il ritardo.", satz_de: "Ich entschuldige mich für die Verspätung." },
+  pensare: { satz_it: "Penso spesso al futuro.", satz_de: "Ich denke oft an die Zukunft." },
+  crescere: { satz_it: "I bambini crescono molto velocemente.", satz_de: "Kinder wachsen sehr schnell." },
+  conoscere: { satz_it: "Conosco questa città molto bene.", satz_de: "Ich kenne diese Stadt sehr gut." },
+  riconoscere: { satz_it: "Non lo riconosco senza gli occhiali.", satz_de: "Ich erkenne ihn ohne Brille nicht." },
+  scendere: { satz_it: "Scendiamo le scale insieme.", satz_de: "Wir gehen zusammen die Treppe hinunter." },
+  nascondere: { satz_it: "Nascondo il regalo nell'armadio.", satz_de: "Ich verstecke das Geschenk im Schrank." },
+  scoprire: { satz_it: "Scopro un nuovo ristorante ogni mese.", satz_de: "Ich entdecke jeden Monat ein neues Restaurant." },
+  rompere: { satz_it: "Il vento rompe un ramo dell'albero.", satz_de: "Der Wind bricht einen Ast des Baumes ab." },
+  riparare: { satz_it: "Ripariamo la bicicletta insieme.", satz_de: "Wir reparieren zusammen das Fahrrad." },
+  distruggere: { satz_it: "La tempesta distrugge il tetto della casa.", satz_de: "Der Sturm zerstört das Dach des Hauses." },
+  creare: { satz_it: "L'artista crea opere uniche.", satz_de: "Der Künstler erschafft einzigartige Werke." },
+  disegnare: { satz_it: "Disegno case e giardini per lavoro.", satz_de: "Ich zeichne beruflich Häuser und Gärten." },
+  dipingere: { satz_it: "Dipingo il muro di bianco.", satz_de: "Ich streiche die Wand weiß." },
+  fotografare: { satz_it: "Fotografo i tramonti al mare.", satz_de: "Ich fotografiere die Sonnenuntergänge am Meer." },
+  registrare: { satz_it: "Registriamo la lezione per rivederla dopo.", satz_de: "Wir nehmen die Lektion auf, um sie später anzusehen." },
+  suonare: { satz_it: "Suono il piano da bambino.", satz_de: "Ich spiele seit meiner Kindheit Klavier." },
+  dimenticare: { satz_it: "Dimentico spesso l'ombrello a casa.", satz_de: "Ich vergesse oft den Regenschirm zu Hause." },
+  sognare: { satz_it: "Sogno di viaggiare in Giappone.", satz_de: "Ich träume davon, nach Japan zu reisen." },
+  sperare: { satz_it: "Spero di vederti presto.", satz_de: "Ich hoffe, dich bald zu sehen." },
+  desiderare: { satz_it: "Desidero solo un po' di pace.", satz_de: "Ich wünsche mir nur etwas Ruhe." },
+  temere: { satz_it: "Temo il buio da bambino.", satz_de: "Ich fürchte mich seit meiner Kindheit vor der Dunkelheit." },
+  odiare: { satz_it: "Odio aspettare in fila.", satz_de: "Ich hasse es, in der Schlange zu warten." },
+  smettere: { satz_it: "Smetto di lavorare alle cinque.", satz_de: "Ich höre um fünf Uhr auf zu arbeiten." },
+  iniziare: { satz_it: "Il film inizia tra dieci minuti.", satz_de: "Der Film beginnt in zehn Minuten." },
+  voltare: { satz_it: "Voltiamo a destra al semaforo.", satz_de: "Wir biegen an der Ampel rechts ab." },
+  saltare: { satz_it: "I bambini saltano sul letto.", satz_de: "Die Kinder springen auf dem Bett." },
+  volare: { satz_it: "Gli uccelli volano verso sud in autunno.", satz_de: "Die Vögel fliegen im Herbst nach Süden." },
+  guidare: { satz_it: "Guido la macchina di mio padre.", satz_de: "Ich fahre das Auto meines Vaters." },
+  parcheggiare: { satz_it: "Parcheggio davanti al supermercato.", satz_de: "Ich parke vor dem Supermarkt." },
+  sorpassare: { satz_it: "È pericoloso sorpassare in curva.", satz_de: "Es ist gefährlich, in der Kurve zu überholen." },
+  frenare: { satz_it: "Frena bruscamente per evitare il cane.", satz_de: "Er/Sie bremst plötzlich, um den Hund zu vermeiden." },
+  accelerare: { satz_it: "Accelero per prendere l'autostrada.", satz_de: "Ich beschleunige, um auf die Autobahn zu fahren." },
+  attraversare: { satz_it: "Attraversiamo la strada sulle strisce.", satz_de: "Wir überqueren die Straße auf dem Zebrastreifen." },
+  raggiungere: { satz_it: "Raggiungo l'ufficio in venti minuti.", satz_de: "Ich erreiche das Büro in zwanzig Minuten." },
+  avvicinarsi: { satz_it: "La tempesta si avvicina rapidamente.", satz_de: "Der Sturm nähert sich schnell." },
+  allontanarsi: { satz_it: "La nave si allontana dal porto.", satz_de: "Das Schiff entfernt sich vom Hafen." },
+  salutare: { satz_it: "Saluto i vicini ogni mattina.", satz_de: "Ich grüße jeden Morgen die Nachbarn." },
+  presentare: { satz_it: "Ti presento il mio collega.", satz_de: "Ich stelle dir meinen Kollegen vor." },
+  confondere: { satz_it: "Confondo sempre i loro nomi.", satz_de: "Ich verwechsle immer ihre Namen." },
+  separare: { satz_it: "Separiamo la carta dalla plastica.", satz_de: "Wir trennen Papier von Plastik." },
+  dividere: { satz_it: "Divido la pizza in quattro parti.", satz_de: "Ich teile die Pizza in vier Teile." },
+  condividere: { satz_it: "Condivido l'appartamento con due amici.", satz_de: "Ich teile mir die Wohnung mit zwei Freunden." },
+  collegare: { satz_it: "Colleghiamo il computer alla stampante.", satz_de: "Wir verbinden den Computer mit dem Drucker." },
+  aggiungere: { satz_it: "Aggiungo un po' di sale alla zuppa.", satz_de: "Ich gebe etwas Salz zur Suppe." },
+  sommare: { satz_it: "Sommo tutti i costi del viaggio.", satz_de: "Ich addiere alle Kosten der Reise." },
+  calcolare: { satz_it: "Calcolo il tempo di percorrenza.", satz_de: "Ich berechne die Fahrzeit." },
+  contare: { satz_it: "Il bambino conta fino a cento.", satz_de: "Das Kind zählt bis hundert." },
+  misurare: { satz_it: "Misuro la stanza prima di comprare il tappeto.", satz_de: "Ich messe das Zimmer, bevor ich den Teppich kaufe." },
+  pesare: { satz_it: "Peso la valigia prima di partire.", satz_de: "Ich wiege den Koffer, bevor ich abreise." },
+  valutare: { satz_it: "Il professore valuta gli esami.", satz_de: "Der Professor bewertet die Prüfungen." },
+  prevedere: { satz_it: "Il meteo prevede pioggia domani.", satz_de: "Der Wetterbericht sagt für morgen Regen voraus." },
+  progettare: { satz_it: "Progettiamo un viaggio in Sicilia.", satz_de: "Wir planen eine Reise nach Sizilien." },
+  funzionare: { satz_it: "Il telecomando non funziona più.", satz_de: "Die Fernbedienung funktioniert nicht mehr." },
+  caricare: { satz_it: "Carico il telefono ogni notte.", satz_de: "Ich lade mein Handy jede Nacht auf." },
+  scaricare: { satz_it: "Scarico un'applicazione nuova.", satz_de: "Ich lade eine neue App herunter." },
+  salvare: { satz_it: "Salvo il documento prima di chiudere.", satz_de: "Ich speichere das Dokument, bevor ich es schließe." },
+  cancellare: { satz_it: "Cancello i messaggi vecchi.", satz_de: "Ich lösche die alten Nachrichten." },
+  stampare: { satz_it: "Stampo i biglietti per il concerto.", satz_de: "Ich drucke die Konzertkarten aus." },
+  cliccare: { satz_it: "Clicco sul link per aprire la pagina.", satz_de: "Ich klicke auf den Link, um die Seite zu öffnen." },
+  navigare: { satz_it: "Navigo su internet la sera.", satz_de: "Ich surfe abends im Internet." },
+  pubblicare: { satz_it: "Pubblico una foto ogni giorno.", satz_de: "Ich veröffentliche jeden Tag ein Foto." },
+  commentare: { satz_it: "Commento i post dei miei amici.", satz_de: "Ich kommentiere die Beiträge meiner Freunde." },
+  telefonare: { satz_it: "Telefono a mia madre ogni domenica.", satz_de: "Ich rufe jeden Sonntag meine Mutter an." },
+  viaggiare: { satz_it: "Viaggio spesso per lavoro.", satz_de: "Ich reise oft beruflich." },
+  prenotare: { satz_it: "Prenoto un tavolo per due persone.", satz_de: "Ich reserviere einen Tisch für zwei Personen." },
+  imbarcarsi: { satz_it: "Ci imbarchiamo tra un'ora.", satz_de: "Wir gehen in einer Stunde an Bord." },
+  atterrare: { satz_it: "L'aereo atterra con dieci minuti di ritardo.", satz_de: "Das Flugzeug landet mit zehn Minuten Verspätung." },
+  decollare: { satz_it: "L'aereo decolla puntuale alle otto.", satz_de: "Das Flugzeug hebt pünktlich um acht Uhr ab." },
+  visitare: { satz_it: "Visitiamo il museo il fine settimana.", satz_de: "Wir besuchen am Wochenende das Museum." },
+  esplorare: { satz_it: "Esploriamo la città vecchia a piedi.", satz_de: "Wir erkunden die Altstadt zu Fuß." },
+  perdersi: { satz_it: "Ci perdiamo spesso nei vicoli stretti.", satz_de: "Wir verlaufen uns oft in den engen Gassen." },
+  orientarsi: { satz_it: "Mi oriento facilmente con la mappa.", satz_de: "Ich orientiere mich leicht mit der Karte." },
+  imbucare: { satz_it: "Imbuco la lettera nella cassetta postale.", satz_de: "Ich werfe den Brief in den Briefkasten." },
+  consegnare: { satz_it: "Il corriere consegna il pacco domani.", satz_de: "Der Kurier liefert das Paket morgen." },
+  ordinare: { satz_it: "Ordino una pizza margherita.", satz_de: "Ich bestelle eine Pizza Margherita." },
+  servire: { satz_it: "Il cameriere serve i piatti caldi.", satz_de: "Der Kellner serviert die warmen Gerichte." },
+  assaggiare: { satz_it: "Assaggio sempre i piatti nuovi.", satz_de: "Ich probiere immer neue Gerichte." },
+  cuocere: { satz_it: "Cuocio la pasta per dieci minuti.", satz_de: "Ich koche die Pasta zehn Minuten lang." },
+  friggere: { satz_it: "Friggo le patatine nell'olio caldo.", satz_de: "Ich fritiere die Kartoffeln im heißen Öl." },
+  bollire: { satz_it: "L'acqua bolle dopo cinque minuti.", satz_de: "Das Wasser kocht nach fünf Minuten." },
+  tagliare: { satz_it: "Taglio le verdure per l'insalata.", satz_de: "Ich schneide das Gemüse für den Salat." },
+  mescolare: { satz_it: "Mescolo la farina con le uova.", satz_de: "Ich vermische das Mehl mit den Eiern." },
+  versare: { satz_it: "Verso il vino nei bicchieri.", satz_de: "Ich gieße den Wein in die Gläser." },
+  svuotare: { satz_it: "Svuoto la lavastoviglie ogni sera.", satz_de: "Ich räume jeden Abend die Spülmaschine aus." },
+  assaporare: { satz_it: "Assaporo lentamente questo dolce.", satz_de: "Ich genieße dieses Dessert langsam." },
+  nutrirsi: { satz_it: "Ci nutriamo in modo sano.", satz_de: "Wir ernähren uns gesund." },
+  dimagrire: { satz_it: "Dimagrisco con una dieta equilibrata.", satz_de: "Ich nehme mit einer ausgewogenen Diät ab." },
+  ingrassare: { satz_it: "Ingrasso sempre durante le feste.", satz_de: "Ich nehme während der Feiertage immer zu." },
+  allenarsi: { satz_it: "Mi alleno in palestra tre volte a settimana.", satz_de: "Ich trainiere dreimal pro Woche im Fitnessstudio." },
+  nuotare: { satz_it: "Nuoto in piscina ogni mattina.", satz_de: "Ich schwimme jeden Morgen im Schwimmbad." },
+  sciare: { satz_it: "Sciamo sulle Alpi ogni inverno.", satz_de: "Wir fahren jeden Winter in den Alpen Ski." },
+  pattinare: { satz_it: "I bambini pattinano sul ghiaccio.", satz_de: "Die Kinder laufen auf dem Eis Schlittschuh." },
+  arrampicarsi: { satz_it: "Ci arrampichiamo sulla roccia.", satz_de: "Wir klettern auf den Felsen." },
+  tuffarsi: { satz_it: "Mi tuffo in piscina dal trampolino.", satz_de: "Ich springe vom Sprungbrett ins Schwimmbecken." },
+  pescare: { satz_it: "Peschiamo nel lago la domenica.", satz_de: "Wir angeln sonntags am See." },
+  cacciare: { satz_it: "Il gatto caccia i topi in giardino.", satz_de: "Die Katze jagt Mäuse im Garten." },
+  competere: { satz_it: "Le due aziende competono sul mercato.", satz_de: "Die beiden Firmen konkurrieren auf dem Markt." },
+  gareggiare: { satz_it: "I due atleti gareggiano per la medaglia.", satz_de: "Die beiden Athleten wetteifern um die Medaille." },
+  allenare: { satz_it: "L'allenatore allena la squadra ogni giorno.", satz_de: "Der Trainer trainiert das Team jeden Tag." },
+  segnare: { satz_it: "L'attaccante segna un gol al minuto novanta.", satz_de: "Der Stürmer erzielt in der neunzigsten Minute ein Tor." },
+  tifare: { satz_it: "Tifiamo per la nostra squadra ogni domenica.", satz_de: "Wir feuern jeden Sonntag unsere Mannschaft an." },
+  ammalarsi: { satz_it: "Mi ammalo raramente d'inverno.", satz_de: "Ich werde selten im Winter krank." },
+  curare: { satz_it: "Il medico cura i pazienti con attenzione.", satz_de: "Der Arzt behandelt die Patienten sorgfältig." },
+  operare: { satz_it: "Il chirurgo opera dalle otto del mattino.", satz_de: "Der Chirurg operiert ab acht Uhr morgens." },
+  respirare: { satz_it: "Respiro profondamente prima dell'esame.", satz_de: "Ich atme vor der Prüfung tief durch." },
+  prescrivere: { satz_it: "Il medico prescrive delle medicine.", satz_de: "Der Arzt verschreibt Medikamente." },
+  misurarsi: { satz_it: "Mi misuro la febbre ogni ora.", satz_de: "Ich messe stündlich mein Fieber." },
+  riposarsi: { satz_it: "Ci riposiamo un'ora dopo pranzo.", satz_de: "Wir ruhen uns nach dem Mittagessen eine Stunde aus." },
+  vaccinarsi: { satz_it: "Ci vacciniamo ogni autunno contro l'influenza.", satz_de: "Wir lassen uns jeden Herbst gegen die Grippe impfen." },
+  assumere: { satz_it: "L'azienda assume tre nuovi impiegati.", satz_de: "Die Firma stellt drei neue Mitarbeiter ein." },
+  licenziare: { satz_it: "Il capo licenzia due dipendenti.", satz_de: "Der Chef entlässt zwei Angestellte." },
+  dimettersi: { satz_it: "Il direttore si dimette dopo lo scandalo.", satz_de: "Der Direktor tritt nach dem Skandal zurück." },
+  guadagnarsi: { satz_it: "Mi guadagno da vivere onestamente.", satz_de: "Ich verdiene mir ehrlich meinen Lebensunterhalt." },
+  investire: { satz_it: "Investiamo in un nuovo progetto.", satz_de: "Wir investieren in ein neues Projekt." },
+  firmare: { satz_it: "Firmo il contratto domani mattina.", satz_de: "Ich unterschreibe morgen früh den Vertrag." },
+  negoziare: { satz_it: "Negoziamo il prezzo con il venditore.", satz_de: "Wir verhandeln den Preis mit dem Verkäufer." },
+  collaborare: { satz_it: "Collaboriamo con altre aziende europee.", satz_de: "Wir arbeiten mit anderen europäischen Firmen zusammen." },
+  delegare: { satz_it: "Il manager delega alcuni compiti.", satz_de: "Der Manager delegiert einige Aufgaben." },
+  archiviare: { satz_it: "Archivio tutti i documenti importanti.", satz_de: "Ich archiviere alle wichtigen Dokumente." },
+  riunirsi: { satz_it: "Ci riuniamo in sala conferenze alle dieci.", satz_de: "Wir treffen uns um zehn Uhr im Konferenzraum." },
+  dimettere: { satz_it: "L'azienda dimette il dirigente.", satz_de: "Die Firma entlässt den Geschäftsführer." },
+  promuovere: { satz_it: "L'azienda promuove i migliori dipendenti.", satz_de: "Die Firma befördert die besten Mitarbeiter." },
+  retribuire: { satz_it: "L'azienda retribuisce bene i suoi dipendenti.", satz_de: "Die Firma bezahlt ihre Mitarbeiter gut." },
+  candidarsi: { satz_it: "Mi candido per quella posizione.", satz_de: "Ich bewerbe mich für diese Stelle." },
+  assumersi: { satz_it: "Mi assumo la responsabilità dell'errore.", satz_de: "Ich übernehme die Verantwortung für den Fehler." },
+  realizzare: { satz_it: "Realizzo il mio sogno con questo progetto.", satz_de: "Ich verwirkliche meinen Traum mit diesem Projekt." },
+  pianificare: { satz_it: "Pianifichiamo il budget per l'anno prossimo.", satz_de: "Wir planen das Budget für nächstes Jahr." },
+  scadere: { satz_it: "Il contratto scade a fine mese.", satz_de: "Der Vertrag läuft Ende des Monats aus." },
+  rinnovare: { satz_it: "Rinnoviamo il contratto d'affitto ogni anno.", satz_de: "Wir erneuern jedes Jahr den Mietvertrag." },
+  annullare: { satz_it: "Annullo la prenotazione all'ultimo minuto.", satz_de: "Ich storniere die Reservierung in letzter Minute." },
+  posticipare: { satz_it: "Posticipiamo la riunione di un'ora.", satz_de: "Wir verschieben die Besprechung um eine Stunde." },
+  anticipare: { satz_it: "Anticipiamo la partenza di un giorno.", satz_de: "Wir ziehen die Abreise um einen Tag vor." },
+  nominare: { satz_it: "L'azienda nomina un nuovo direttore.", satz_de: "Die Firma ernennt einen neuen Direktor." },
+  licenziarsi: { satz_it: "Mi licenzio dopo cinque anni in azienda.", satz_de: "Ich kündige nach fünf Jahren in der Firma." },
+  piovere: { satz_it: "Piove forte da questa mattina.", satz_de: "Es regnet seit heute Morgen stark." },
+  nevicare: { satz_it: "Nevica spesso sulle montagne in dicembre.", satz_de: "Im Dezember schneit es oft in den Bergen." },
+  tuonare: { satz_it: "Tuona in lontananza prima del temporale.", satz_de: "In der Ferne donnert es vor dem Gewitter." },
+  lampeggiare: { satz_it: "Lampeggia nel cielo scuro.", satz_de: "Es blitzt am dunklen Himmel." },
+  gelare: { satz_it: "L'acqua gela di notte in inverno.", satz_de: "Das Wasser gefriert im Winter nachts." },
+  sciogliersi: { satz_it: "Il ghiaccio si scioglie al sole.", satz_de: "Das Eis schmilzt in der Sonne." },
+  soffiare: { satz_it: "Il vento soffia forte sulla costa.", satz_de: "Der Wind weht stark an der Küste." },
+  splendere: { satz_it: "Il sole splende tutto il giorno.", satz_de: "Die Sonne scheint den ganzen Tag." },
+  rabbuiarsi: { satz_it: "Il cielo si rabbuia prima del temporale.", satz_de: "Der Himmel verdunkelt sich vor dem Gewitter." },
+  schiarirsi: { satz_it: "Il cielo si schiarisce dopo la pioggia.", satz_de: "Der Himmel klart nach dem Regen auf." },
+  appassire: { satz_it: "I fiori appassiscono senza acqua.", satz_de: "Die Blumen verwelken ohne Wasser." },
+  germogliare: { satz_it: "I semi germogliano in primavera.", satz_de: "Die Samen keimen im Frühling." },
+  maturare: { satz_it: "La frutta matura al sole d'estate.", satz_de: "Die Früchte reifen im Sommer in der Sonne." },
+  marcire: { satz_it: "La frutta marcisce se non la mangi subito.", satz_de: "Die Früchte verfaulen, wenn du sie nicht gleich isst." },
+  annaffiare: { satz_it: "Annaffio le piante ogni sera.", satz_de: "Ich gieße jeden Abend die Pflanzen." },
+  piantare: { satz_it: "Piantiamo un albero in giardino.", satz_de: "Wir pflanzen einen Baum im Garten." },
+  potare: { satz_it: "Il giardiniere pota le rose in marzo.", satz_de: "Der Gärtner beschneidet die Rosen im März." },
+  raccogliere: { satz_it: "Raccogliamo la frutta in autunno.", satz_de: "Wir ernten im Herbst die Früchte." },
+  seminare: { satz_it: "Il contadino semina il grano in ottobre.", satz_de: "Der Bauer sät das Getreide im Oktober." },
+  coltivare: { satz_it: "Coltiviamo verdure biologiche nell'orto.", satz_de: "Wir bauen Bio-Gemüse im Garten an." },
+  abbaiare: { satz_it: "Il cane abbaia tutta la notte.", satz_de: "Der Hund bellt die ganze Nacht." },
+  miagolare: { satz_it: "Il gatto miagola quando ha fame.", satz_de: "Die Katze miaut, wenn sie Hunger hat." },
+  nidificare: { satz_it: "Gli uccelli nidificano sotto il tetto.", satz_de: "Die Vögel nisten unter dem Dach." },
+  stupirsi: { satz_it: "Mi stupisco di quanto sia cambiata la città.", satz_de: "Ich wundere mich, wie sehr sich die Stadt verändert hat." },
+  meravigliarsi: { satz_it: "Ci meravigliamo davanti a questo panorama.", satz_de: "Wir staunen angesichts dieser Aussicht." },
+  deludere: { satz_it: "Il film delude le aspettative.", satz_de: "Der Film enttäuscht die Erwartungen." },
+  soddisfare: { satz_it: "Il risultato soddisfa tutti.", satz_de: "Das Ergebnis zufriedenstellt alle." },
+  lamentarsi: { satz_it: "Si lamenta sempre del tempo.", satz_de: "Er/Sie beschwert sich immer über das Wetter." },
+  protestare: { satz_it: "Gli studenti protestano contro la riforma.", satz_de: "Die Studenten protestieren gegen die Reform." },
+  scusarsi: { satz_it: "Mi scuso per il malinteso.", satz_de: "Ich entschuldige mich für das Missverständnis." },
+  perdonare: { satz_it: "Ti perdono per quello che è successo.", satz_de: "Ich verzeihe dir, was passiert ist." },
+  giurare: { satz_it: "Giuro di dire la verità.", satz_de: "Ich schwöre, die Wahrheit zu sagen." },
+  mentire: { satz_it: "Non mentire mai ai tuoi genitori.", satz_de: "Lüg niemals deine Eltern an." },
+  ingannare: { satz_it: "Non voglio ingannare nessuno.", satz_de: "Ich will niemanden täuschen." },
+  fidarsi: { satz_it: "Mi fido completamente di lei.", satz_de: "Ich vertraue ihr vollkommen." },
+  sospettare: { satz_it: "Sospetto che mi abbia mentito.", satz_de: "Ich vermute, dass er/sie mich angelogen hat." },
+  dubitare: { satz_it: "Dubito che arrivi in tempo.", satz_de: "Ich bezweifle, dass er/sie rechtzeitig ankommt." },
+  indovinare: { satz_it: "Indovino sempre i suoi pensieri.", satz_de: "Ich errate immer seine/ihre Gedanken." },
+  rifiutare: { satz_it: "Rifiuto questa proposta di lavoro.", satz_de: "Ich lehne dieses Jobangebot ab." },
+  accettare: { satz_it: "Accetto volentieri il tuo invito.", satz_de: "Ich nehme deine Einladung gerne an." },
+  vietare: { satz_it: "La legge vieta di parcheggiare qui.", satz_de: "Das Gesetz verbietet hier zu parken." },
+  obbligare: { satz_it: "Nessuno mi obbliga a restare.", satz_de: "Niemand zwingt mich zu bleiben." },
+  costringere: { satz_it: "La pioggia ci costringe a rimanere in casa.", satz_de: "Der Regen zwingt uns, zu Hause zu bleiben." },
+  convincere: { satz_it: "Convinco mio fratello a venire con noi.", satz_de: "Ich überzeuge meinen Bruder, mit uns zu kommen." },
+  persuadere: { satz_it: "Mi persuade a cambiare idea.", satz_de: "Er/Sie überredet mich, meine Meinung zu ändern." },
+  insistere: { satz_it: "Insisto per pagare io il conto.", satz_de: "Ich bestehe darauf, die Rechnung zu bezahlen." },
+  resistere: { satz_it: "Non resisto alla tentazione del gelato.", satz_de: "Ich kann der Versuchung des Eises nicht widerstehen." },
+  arrendersi: { satz_it: "Non mi arrendo mai facilmente.", satz_de: "Ich gebe niemals leicht auf." },
+  lottare: { satz_it: "Lottiamo per i nostri diritti.", satz_de: "Wir kämpfen für unsere Rechte." },
+  difendere: { satz_it: "Difendo sempre le mie idee.", satz_de: "Ich verteidige immer meine Ideen." },
+  attaccare: { satz_it: "Il cane attacca senza motivo.", satz_de: "Der Hund greift ohne Grund an." },
+  proteggere: { satz_it: "I genitori proteggono i loro figli.", satz_de: "Eltern beschützen ihre Kinder." },
+  sostenere: { satz_it: "Sostengo la mia amica in questo momento difficile.", satz_de: "Ich unterstütze meine Freundin in dieser schwierigen Zeit." },
+  incoraggiare: { satz_it: "Incoraggio i miei studenti a fare domande.", satz_de: "Ich ermutige meine Schüler, Fragen zu stellen." },
+  scoraggiare: { satz_it: "Un fallimento non mi scoraggia.", satz_de: "Ein Misserfolg entmutigt mich nicht." },
+  criticare: { satz_it: "Critica sempre il lavoro degli altri.", satz_de: "Er/Sie kritisiert immer die Arbeit der anderen." },
+  lodare: { satz_it: "Il maestro loda l'impegno degli alunni.", satz_de: "Der Lehrer lobt den Einsatz der Schüler." },
+  ammirare: { satz_it: "Ammiro il suo coraggio.", satz_de: "Ich bewundere seinen/ihren Mut." },
+  invidiare: { satz_it: "Non invidio nessuno.", satz_de: "Ich beneide niemanden." },
+  rispettare: { satz_it: "Rispetto le opinioni degli altri.", satz_de: "Ich respektiere die Meinungen anderer." },
+  disprezzare: { satz_it: "Disprezza le bugie più di ogni altra cosa.", satz_de: "Er/Sie verachtet Lügen mehr als alles andere." },
+  ignorare: { satz_it: "Ignoro i suoi commenti negativi.", satz_de: "Ich ignoriere seine/ihre negativen Kommentare." },
+  notare: { satz_it: "Noto subito i dettagli.", satz_de: "Ich bemerke sofort die Details." },
+  osservare: { satz_it: "Osservo gli uccelli dalla finestra.", satz_de: "Ich beobachte die Vögel vom Fenster aus." },
+  fissare: { satz_it: "Fissiamo un appuntamento per martedì.", satz_de: "Wir vereinbaren einen Termin für Dienstag." },
+  verificare: { satz_it: "Verifico i dati prima di inviare il rapporto.", satz_de: "Ich überprüfe die Daten, bevor ich den Bericht sende." },
+  confermare: { satz_it: "Confermo la mia presenza alla riunione.", satz_de: "Ich bestätige meine Anwesenheit bei der Besprechung." },
+  negare: { satz_it: "Nega di aver rotto il vaso.", satz_de: "Er/Sie leugnet, die Vase zerbrochen zu haben." },
+  ammettere: { satz_it: "Ammetto di aver sbagliato.", satz_de: "Ich gebe zu, mich geirrt zu haben." },
+  festeggiare: { satz_it: "Festeggiamo il compleanno di mia figlia.", satz_de: "Wir feiern den Geburtstag meiner Tochter." },
+  celebrare: { satz_it: "Celebriamo dieci anni di matrimonio.", satz_de: "Wir feiern zehn Jahre Ehe." },
+  litigare: { satz_it: "I fratelli litigano spesso per sciocchezze.", satz_de: "Die Geschwister streiten oft wegen Kleinigkeiten." },
+  tranquillizzare: { satz_it: "Cerco di tranquillizzare il bambino spaventato.", satz_de: "Ich versuche, das verängstigte Kind zu beruhigen." },
+  spaventare: { satz_it: "Il rumore forte spaventa il gatto.", satz_de: "Das laute Geräusch erschreckt die Katze." },
+  sorprendere: { satz_it: "La sua reazione mi sorprende sempre.", satz_de: "Seine/Ihre Reaktion überrascht mich immer." },
+  vendere: { satz_it: "Vendiamo la vecchia macchina.", satz_de: "Wir verkaufen das alte Auto." },
+  scambiare: { satz_it: "Scambio il mio libro con il suo.", satz_de: "Ich tausche mein Buch gegen seins." },
+  rubare: { satz_it: "Qualcuno ruba la bicicletta dal cortile.", satz_de: "Jemand stiehlt das Fahrrad aus dem Hof." },
+  indicare: { satz_it: "Il cartello indica la strada giusta.", satz_de: "Das Schild zeigt den richtigen Weg." },
+  segnalare: { satz_it: "Segnalo il guasto all'assistenza.", satz_de: "Ich melde den Defekt dem Kundendienst." },
+  avvertire: { satz_it: "Ti avverto del pericolo.", satz_de: "Ich warne dich vor der Gefahr." },
+  avvisare: { satz_it: "Avviso i vicini del rumore.", satz_de: "Ich informiere die Nachbarn über den Lärm." },
+  informare: { satz_it: "Informo il capo della situazione.", satz_de: "Ich informiere den Chef über die Situation." },
+  comunicare: { satz_it: "Comunichiamo spesso per email.", satz_de: "Wir kommunizieren oft per E-Mail." },
+  discutere: { satz_it: "Discutiamo il problema con calma.", satz_de: "Wir diskutieren das Problem in Ruhe." },
+  insegnare: { satz_it: "Insegno matematica alle medie.", satz_de: "Ich unterrichte Mathematik an der Mittelschule." },
+  interrogare: { satz_it: "Il professore interroga gli studenti oggi.", satz_de: "Der Professor prüft die Studenten heute mündlich." },
+  bocciare: { satz_it: "Il professore boccia due studenti.", satz_de: "Der Professor lässt zwei Studenten durchfallen." },
+  iscriversi: { satz_it: "Mi iscrivo all'università questo autunno.", satz_de: "Ich schreibe mich diesen Herbst an der Uni ein." },
+  laurearsi: { satz_it: "Mi laureo in ingegneria il prossimo anno.", satz_de: "Ich mache nächstes Jahr meinen Ingenieurabschluss." },
+  diplomarsi: { satz_it: "Mi diplomo al liceo scientifico.", satz_de: "Ich mache meinen Abschluss am naturwissenschaftlichen Gymnasium." },
+  ripetere: { satz_it: "Ripeto la domanda più lentamente.", satz_de: "Ich wiederhole die Frage langsamer." },
+  memorizzare: { satz_it: "Memorizzo le parole nuove ogni giorno.", satz_de: "Ich lerne jeden Tag neue Wörter auswendig." },
+  esercitarsi: { satz_it: "Mi esercito al pianoforte un'ora al giorno.", satz_de: "Ich übe eine Stunde am Tag Klavier." },
+  consultare: { satz_it: "Consulto il dizionario spesso.", satz_de: "Ich schlage oft im Wörterbuch nach." },
+  citare: { satz_it: "Cita spesso frasi famose.", satz_de: "Er/Sie zitiert oft berühmte Sätze." },
+  riassumere: { satz_it: "Riassumo il capitolo in poche righe.", satz_de: "Ich fasse das Kapitel in wenigen Zeilen zusammen." },
+  dimostrare: { satz_it: "Il test dimostra la sua abilità.", satz_de: "Der Test beweist seine/ihre Fähigkeit." },
+  analizzare: { satz_it: "Analizziamo i risultati dell'esperimento.", satz_de: "Wir analysieren die Ergebnisse des Experiments." },
+  sperimentare: { satz_it: "Sperimentiamo nuove ricette in cucina.", satz_de: "Wir experimentieren mit neuen Rezepten in der Küche." },
+  inventare: { satz_it: "Inventa sempre nuove scuse.", satz_de: "Er/Sie erfindet immer neue Ausreden." },
+  dedurre: { satz_it: "Deduco la risposta dai dati disponibili.", satz_de: "Ich leite die Antwort aus den verfügbaren Daten ab." },
+  presumere: { satz_it: "Presumo che tu sia stanco dopo il viaggio.", satz_de: "Ich nehme an, dass du nach der Reise müde bist." },
+  considerare: { satz_it: "Considero questa opzione con attenzione.", satz_de: "Ich ziehe diese Option sorgfältig in Betracht." },
+  riflettere: { satz_it: "Rifletto a lungo prima di decidere.", satz_de: "Ich denke lange nach, bevor ich entscheide." },
+  concentrarsi: { satz_it: "Mi concentro meglio in silenzio.", satz_de: "Ich konzentriere mich besser in Stille." },
+  distrarsi: { satz_it: "Mi distraggo facilmente con il rumore.", satz_de: "Ich lasse mich leicht durch Lärm ablenken." },
+  abituarsi: { satz_it: "Mi abituo presto ai nuovi orari.", satz_de: "Ich gewöhne mich schnell an die neuen Zeiten." },
+  adattarsi: { satz_it: "Ci adattiamo velocemente al nuovo clima.", satz_de: "Wir passen uns schnell an das neue Klima an." },
+  evitare: { satz_it: "Evito il traffico prendendo un'altra strada.", satz_de: "Ich vermeide den Verkehr, indem ich eine andere Straße nehme." },
+  rischiare: { satz_it: "Rischiamo di perdere il treno.", satz_de: "Wir riskieren, den Zug zu verpassen." },
+  azzardare: { satz_it: "Azzardo un'ipotesi sul finale.", satz_de: "Ich wage eine Vermutung über das Ende." },
+  osare: { satz_it: "Non oso chiedere un aumento.", satz_de: "Ich wage es nicht, eine Gehaltserhöhung zu erbitten." },
+  tentare: { satz_it: "Tento di risolvere il problema da solo.", satz_de: "Ich versuche, das Problem allein zu lösen." },
+  riuscire: { satz_it: "Riesco finalmente a finire il progetto.", satz_de: "Es gelingt mir endlich, das Projekt zu beenden." },
+  migliorare: { satz_it: "Miglioro il mio italiano ogni giorno.", satz_de: "Ich verbessere jeden Tag mein Italienisch." },
+  peggiorare: { satz_it: "La situazione peggiora rapidamente.", satz_de: "Die Situation verschlechtert sich schnell." },
+  aumentare: { satz_it: "I prezzi aumentano ogni anno.", satz_de: "Die Preise steigen jedes Jahr." },
+  ridurre: { satz_it: "Riduciamo le spese inutili.", satz_de: "Wir reduzieren unnötige Ausgaben." },
+  allargare: { satz_it: "Allarghiamo il team con nuove persone.", satz_de: "Wir erweitern das Team mit neuen Leuten." },
+  restringere: { satz_it: "La strada si restringe più avanti.", satz_de: "Die Straße wird weiter vorne enger." },
+  allungare: { satz_it: "Allungo il contratto di un anno.", satz_de: "Ich verlängere den Vertrag um ein Jahr." },
+  accorciare: { satz_it: "Accorciamo il percorso passando dal centro.", satz_de: "Wir verkürzen die Strecke, indem wir durchs Zentrum fahren." },
+  alzare: { satz_it: "Alza la mano se hai una domanda.", satz_de: "Heb die Hand, wenn du eine Frage hast." },
+  abbassare: { satz_it: "Abbasso il volume della radio.", satz_de: "Ich stelle das Radio leiser." },
+  sollevare: { satz_it: "Solleviamo insieme la scatola pesante.", satz_de: "Wir heben gemeinsam die schwere Kiste an." },
+  trasportare: { satz_it: "Il camion trasporta merci in tutta Europa.", satz_de: "Der LKW transportiert Waren durch ganz Europa." },
+  spostare: { satz_it: "Spostiamo il divano vicino alla finestra.", satz_de: "Wir stellen das Sofa ans Fenster." },
+  spingere: { satz_it: "Spingo la porta per aprirla.", satz_de: "Ich drücke die Tür, um sie zu öffnen." },
+  tirare: { satz_it: "Tira la corda con forza.", satz_de: "Zieh das Seil mit Kraft." },
+  lanciare: { satz_it: "Lancio la palla al cane.", satz_de: "Ich werfe dem Hund den Ball zu." },
+  afferrare: { satz_it: "Afferro il bicchiere prima che cada.", satz_de: "Ich fange das Glas, bevor es fällt." },
+  lasciare: { satz_it: "Lascio la finestra aperta di notte.", satz_de: "Ich lasse das Fenster nachts offen." },
+  gettare: { satz_it: "Getto la carta nel cestino.", satz_de: "Ich werfe das Papier in den Mülleimer." },
+  buttare: { satz_it: "Buttiamo via i mobili vecchi.", satz_de: "Wir werfen die alten Möbel weg." },
+  cucire: { satz_it: "Cucio un bottone sulla camicia.", satz_de: "Ich nähe einen Knopf an das Hemd." },
+  stirare: { satz_it: "Stiro le camicie ogni domenica.", satz_de: "Ich bügele jeden Sonntag die Hemden." },
+  piegare: { satz_it: "Piego i vestiti puliti.", satz_de: "Ich falte die saubere Wäsche." },
+  appendere: { satz_it: "Appendo il quadro in salotto.", satz_de: "Ich hänge das Bild im Wohnzimmer auf." },
+  spazzare: { satz_it: "Spazzo il pavimento della cucina.", satz_de: "Ich fege den Küchenboden." },
+  asciugare: { satz_it: "Asciugo i piatti dopo averli lavati.", satz_de: "Ich trockne das Geschirr nach dem Spülen ab." },
+  stendere: { satz_it: "Stendo il bucato sul balcone.", satz_de: "Ich hänge die Wäsche auf dem Balkon auf." },
+  rifare: { satz_it: "Rifaccio il letto ogni mattina.", satz_de: "Ich mache jeden Morgen das Bett." },
+  sistemare: { satz_it: "Sistemo la mia stanza ogni settimana.", satz_de: "Ich räume jede Woche mein Zimmer auf." },
+  riordinare: { satz_it: "Riordiniamo la cucina prima di uscire.", satz_de: "Wir räumen die Küche auf, bevor wir gehen." },
+  annuire: { satz_it: "Annuisco in segno di accordo.", satz_de: "Ich nicke zustimmend." },
+  scuotere: { satz_it: "Scuoto la testa in disaccordo.", satz_de: "Ich schüttle den Kopf zum Zeichen der Ablehnung." },
+  appartenere: { satz_it: "Questo libro appartiene alla biblioteca.", satz_de: "Dieses Buch gehört der Bibliothek." },
+  possedere: { satz_it: "Possediamo una piccola casa in campagna.", satz_de: "Wir besitzen ein kleines Haus auf dem Land." },
+  mancare: { satz_it: "Mi manchi molto quando sei via.", satz_de: "Du fehlst mir sehr, wenn du weg bist." },
+  bastare: { satz_it: "Basta un'ora per finire il lavoro.", satz_de: "Eine Stunde reicht, um die Arbeit zu beenden." },
+  importare: { satz_it: "Non mi importa del risultato.", satz_de: "Das Ergebnis ist mir egal." },
+  interessare: { satz_it: "Mi interessa molto la storia italiana.", satz_de: "Die italienische Geschichte interessiert mich sehr." },
+  occorrere: { satz_it: "Occorre pazienza per imparare una lingua.", satz_de: "Es braucht Geduld, um eine Sprache zu lernen." },
+  dispiacere: { satz_it: "Mi dispiace per il ritardo.", satz_de: "Es tut mir leid wegen der Verspätung." },
+  bisognare: { satz_it: "Bisogna prenotare con anticipo.", satz_de: "Man muss im Voraus reservieren." },
+  convenire: { satz_it: "Conviene partire presto la mattina.", satz_de: "Es lohnt sich, früh morgens abzureisen." },
+  risultare: { satz_it: "Il piano risulta più difficile del previsto.", satz_de: "Der Plan erweist sich als schwieriger als erwartet." },
+  accadere: { satz_it: "Cosa accade se piove domani?", satz_de: "Was passiert, wenn es morgen regnet?" },
+  verificarsi: { satz_it: "L'incidente si verifica di notte.", satz_de: "Der Unfall ereignet sich nachts." },
+  avvenire: { satz_it: "La cerimonia avviene in giardino.", satz_de: "Die Zeremonie findet im Garten statt." },
+  durare: { satz_it: "Il film dura due ore.", satz_de: "Der Film dauert zwei Stunden." },
+  "iniziare a piovere": { satz_it: "Inizia a piovere proprio ora.", satz_de: "Es fängt gerade jetzt an zu regnen." },
+  "smettere di piovere": { satz_it: "Finalmente smette di piovere.", satz_de: "Endlich hört es auf zu regnen." },
+  aggirarsi: { satz_it: "Un gatto si aggira nel cortile di notte.", satz_de: "Nachts streift eine Katze durch den Hof." },
+  vagare: { satz_it: "Vaghiamo senza meta per la città.", satz_de: "Wir schlendern ziellos durch die Stadt." },
+  emigrare: { satz_it: "Molti italiani emigrano in Germania nel dopoguerra.", satz_de: "Viele Italiener wandern nach dem Krieg nach Deutschland aus." },
+  immigrare: { satz_it: "Nuove famiglie immigrano ogni anno in questa città.", satz_de: "Jedes Jahr wandern neue Familien in diese Stadt ein." },
+  votare: { satz_it: "Voto ad ogni elezione.", satz_de: "Ich wähle bei jeder Wahl." },
+  manifestare: { satz_it: "Gli operai manifestano davanti alla fabbrica.", satz_de: "Die Arbeiter demonstrieren vor der Fabrik." },
+};
+
+function konjugiere(infinitiv, typ){
+  // Reflexivität und die passenden Pronomen zuerst bestimmen — sowohl der
+  // IRR-Zweig gleich unten als auch der reguläre Zweig weiter unten brauchen sie.
+  const reflexiv = infinitiv.includes("si") && infinitiv.endsWith("si");
+  const pronRefl = reflexiv ? ["mi ","ti ","si ","ci ","vi ","si "] : ["","","","","",""];
+
+  if(typ.startsWith("v:IRR:")){
+    const basisIRR = typ.replace("v:IRR:","");
+    const formen = IRREGOLARI[basisIRR];
+    if(formen) return formen.map((f,i) => pronRefl[i] + f);
+  }
+
+  // "si" abtrennen UND das dabei ursprünglich wegfallende "e" wieder anhängen:
+  // svegliarsi -> "svegliar" + "e" = svegliare (das ist der eigentliche Infinitiv,
+  // von dem aus der Stamm berechnet werden muss)
+  const basis = reflexiv ? infinitiv.slice(0,-2) + "e" : infinitiv;
+  const stamm = basis.slice(0,-3);
+  let endungen;
+  if(typ === "v:are") endungen = ["o","i","a","iamo","ate","ano"];
+  else if(typ === "v:ere") endungen = ["o","i","e","iamo","ete","ono"];
+  else if(typ === "v:ire") endungen = ["o","i","e","iamo","ite","ono"];
+  else if(typ === "v:isc") endungen = ["isco","isci","isce","iamo","ite","iscono"];
+  else endungen = ["o","i","e","iamo","ete","ono"];
+  // Italienische Rechtschreibregel Nr. 1: endet der Stamm auf "i" (z.B. "mangi-" von
+  // mangiare) und beginnt die Endung ebenfalls mit "i" (-i, -iamo), verschmilzt
+  // das doppelte i zu einem einzigen -> mangi + iamo = mangiamo, nicht mangiiamo.
+  //
+  // Italienische Rechtschreibregel Nr. 2 (das Gegenstück): endet der Stamm auf "c"
+  // oder "g" (z.B. "gioc-" von giocare, "pag-" von pagare) und beginnt die Endung
+  // mit "i", muss ein "h" eingeschoben werden -> gioc + h + iamo = giochiamo, nicht
+  // giociamo. Grund: "ci"/"gi" wird im Italienischen weich ausgesprochen (wie in
+  // "cena", "gente"), aber das "c"/"g" am Stammende von -care/-gare-Verben ist hart
+  // (wie in "casa", "gatto") und muss das auch in der konjugierten Form bleiben.
+  // Gilt nur für v:are, weil dieses Hart/Weich-Problem nur bei -care/-gare-Infinitiven
+  // auftritt -- bei -ere/-ire ergibt sich die Aussprache schon aus dem Infinitiv selbst.
+  return endungen.map((e,i) => {
+    let form;
+    if(typ === 'v:are' && (stamm.endsWith('c') || stamm.endsWith('g')) && e.startsWith('i')){
+      form = stamm + 'h' + e;
+    } else if(stamm.endsWith('i') && e.startsWith('i')){
+      form = stamm + e.slice(1);
+    } else {
+      form = stamm + e;
+    }
+    return pronRefl[i] + form;
+  });
+}
+
+function istVerb(v){ return v.typ && v.typ.startsWith("v:"); }
+
+// Gibt es für diese Karte überhaupt eine Notiz-Seite? Ja, sobald mindestens
+// eines der beiden Felder gefüllt ist. Eine Funktion für diese Prüfung, statt
+// "v.notiz1 || v.notiz2" viermal im Code zu wiederholen (siehe maxZustandFuer,
+// notizBadge, die beiden "Antippen für..."-Hinweise).
+function hatNotiz(v){
+  return !!(v.notiz1 || v.notiz2);
+}
+
+// Höchster erreichbarer zustand-Wert für eine Karte. Reihenfolge ist immer
+// front(0) -> back(1) -> [konjugation, nur bei Verben] -> [notiz, nur wenn vorhanden].
+// Die Notiz-Position hängt davon ab, ob vorher noch die Konjugationsseite kommt.
+function maxZustandFuer(v){
+  const nachKonjugation = istVerb(v) ? 2 : 1;
+  return hatNotiz(v) ? nachKonjugation + 1 : nachKonjugation;
+}
+
+// ---------- Automatische Worttyp-Erkennung ----------
+// Ersetzt die frühere "typ"-Spalte in der xlsx: der Typ wird direkt aus dem
+// italienischen Wort abgeleitet, keine manuelle Angabe mehr nötig.
+
+function hatArtikel(it){
+  // Nomen werden in diesem Projekt per Konvention mit Artikel gespeichert (z.B. "la casa"),
+  // Verben und Adjektive nie. Das macht diese Prüfung überraschend zuverlässig.
+  // Sonderfall "l'": anders als "il/la/lo/..." steht davor NIE ein Leerzeichen
+  // (l'amico, l'acqua) — deshalb eigene, von den anderen Artikeln getrennte Prüfung.
+  const wort = it.trim();
+  return /^(il|lo|la|i|le|gli)\s/i.test(wort) || /^l['’]/i.test(wort);
+}
+
+function basisInfinitiv(wort){
+  // Reflexive Verben (z.B. "svegliarsi") auf die Grundform zurückführen ("svegliare"),
+  // damit die Endungs- und IRREGOLARI-Prüfung greift. konjugiere() kümmert sich später
+  // ohnehin selbst um die mi/ti/si/ci/vi-Pronomen anhand des Original-Infinitivs.
+  if(/(arsi|ersi|irsi)$/.test(wort)) return wort.slice(0, -2) + 'e';
+  return wort;
+}
+
+function erkenneTyp(it){
+  const wort = it.trim().toLowerCase();
+  if(hatArtikel(wort)) return 'n';
+
+  const basis = basisInfinitiv(wort);
+  if(IRREGOLARI[basis]) return 'v:IRR:' + basis;
+  if(basis.endsWith('are')) return 'v:are';
+  if(basis.endsWith('ere')) return 'v:ere';
+  if(basis.endsWith('ire')) return ISC_VERBEN.has(basis) ? 'v:isc' : 'v:ire';
+
+  return 'x'; // weder Artikel noch Verb-Endung -> generisches Beispiel (Adjektive, Sonstiges)
+}
+
+function mische(array){
+  const a = array.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ---------- Beispielsätze (nur für Verben, aus den 500 kuratierten Verben) ----------
+// Bei Nomen, Adjektiven & Sonstigem kommt ein Beispielsatz ausschließlich über die
+// notizen-Spalte (eigene Kartenseite) -- kein automatisch generiertes Template mehr.
+// sprache: 'it' oder 'de' -- muss zur Sprache des Worts passen, das gerade neben
+// dem Satz angezeigt wird (also zur "antwort" auf der back-Seite). Vorher wurde
+// hier hart satz_it zurückgegeben, unabhängig von der Lernrichtung -- dadurch
+// stand bei IT->DE-Richtung ein italienischer Satz unter dem deutschen Wort.
+function gibBeispiel(v, sprache){
+  if(!istVerb(v)) return '';
+  // Gleiche Normalisierung wie in erkenneTyp(): BEISPIELSAETZE ist komplett
+  // kleingeschrieben angelegt. Ohne trim()/toLowerCase() hier würde z.B. "Dormire"
+  // (Großschreibung in der xlsx) den Eintrag "dormire" nicht finden -- der Lookup
+  // scheitert dann still (vorbereitet === undefined), ohne Fehler oder Hinweis.
+  const key = v.it.trim().toLowerCase();
+  const vorbereitet = BEISPIELSAETZE[key];
+  if(vorbereitet) return sprache === 'de' ? vorbereitet.satz_de : vorbereitet.satz_it;
+  // Fallback nur für den Fall, dass ein Verb NICHT in den 500 kuratierten steht
+  // (z.B. ein Verb, das du selbst per xlsx hinzugefügt hast). Die konjugierten
+  // Formen sind immer italienisch -- für "de" gibt es keinen sinnvollen generischen
+  // Fallback-Satz, daher dort lieber gar keinen Satz zeigen als einen falschen.
+  if(sprache === 'de') return '';
+  const formen = konjugiere(v.it, v.typ);
+  return `Io ${formen[0]} spesso. / Noi ${formen[3]} insieme.`;
+}
+
+// ---------- App-Zustand ----------
+let AKTIVE_DATEI = null;  // { blattname: [ {it,de,kat,typ}, ... ], ... } — alle Decks der zuletzt geladenen xlsx
+let DECK_NAME = null;     // Name des aktuell gewählten Arbeitsblatts/Decks
+let RICHTUNG = 'it-de';   // 'it-de' = Italienisch zeigen, Deutsch erraten | 'de-it' = umgekehrt
+let SORTIERT = true;      // true = Reihenfolge wie in der xlsx | false = gemischt
+
+// Baut VOKABELN aus dem aktuellen Deck neu auf, abhängig von SORTIERT.
+// .slice() bei sortiert wichtig: liefert eine Kopie, damit VOKABELN nie auf
+// dasselbe Array-Objekt wie AKTIVE_DATEI[DECK_NAME] zeigt -- sonst würde
+// spätere Bearbeitung von VOKABELN (aktuell passiert das nirgends, aber sicher
+// ist sicher) versehentlich auch die Originaldaten verändern.
+function vokabelnNeuLaden(){
+  return SORTIERT ? AKTIVE_DATEI[DECK_NAME].slice() : mische(AKTIVE_DATEI[DECK_NAME]);
+}
+let VOKABELN = [];
+let idx = 0;
+let zustand = 0; // 0 = Frage, 1 = Antwort, 2 = Konjugation (nur bei Verben, immer italienisch)
+let punkte = { heute:0 };
+
+const stage = document.getElementById('stage');
+const statsRow = document.getElementById('statsRow');
+const resetRow = document.getElementById('resetRow');
+const untertitelText = document.getElementById('untertitelText');
+
+// ---------- Persistenz: Datei (alle Decks) ----------
+async function ladeDatei(){
+  try{
+    const res = await window.storage.get('vocab-datei');
+    if(res && res.value) return JSON.parse(res.value);
+  }catch(e){}
+  return null;
+}
+
+async function speichereDatei(decks){
+  try{ await window.storage.set('vocab-datei', JSON.stringify(decks)); }catch(e){}
+}
+
+// Alte Fortschritts-Einträge löschen, wenn eine neue Datei hochgeladen wird —
+// sonst würde z.B. der Kartenindex eines alten Decks auf ein Deck mit anderem
+// Inhalt, aber gleichem Blattnamen, angewendet.
+async function loescheAltenFortschritt(){
+  try{
+    const liste = await window.storage.list('vocab-progress-');
+    if(liste && liste.keys){
+      for(const k of liste.keys){ await window.storage.delete(k); }
+    }
+  }catch(e){}
+}
+
+// ---------- Persistenz: Fortschritt pro Deck ----------
+async function ladeFortschritt(deckName){
+  try{
+    const res = await window.storage.get('vocab-progress-' + deckName);
+    if(res && res.value){
+      const daten = JSON.parse(res.value);
+      // daten.punkte kann bei älteren, vor diesem Update gespeicherten Ständen noch
+      // leicht/schwierig enthalten -- die werden hier einfach ignoriert, da wir nur
+      // noch heute auslesen. { heute:0, ...daten.punkte } würde sie sogar zurückholen,
+      // deshalb explizit nur heute übernehmen.
+      punkte = { heute: (daten.punkte && daten.punkte.heute) || 0 };
+      idx = (daten.idx || 0) % VOKABELN.length;
+      aktualisiereStats();
+      return;
+    }
+  }catch(e){}
+  punkte = { heute:0 };
+  idx = 0;
+  aktualisiereStats();
+}
+
+async function speichereFortschritt(){
+  try{
+    await window.storage.set('vocab-progress-' + DECK_NAME, JSON.stringify({ punkte, idx }));
+  }catch(e){}
+}
+
+function aktualisiereStats(){
+  document.getElementById('statHeute').textContent = punkte.heute;
+}
+
+// ---------- Bildschirme ----------
+function zeigeLeerenZustand(){
+  statsRow.style.display = 'none';
+  resetRow.style.display = 'none';
+  untertitelText.textContent = 'Italienisch';
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">Noch keine Vokabeln geladen</div>
+    </div>
+  `;
+}
+
+function zeigeDeckAuswahl(){
+  statsRow.style.display = 'none';
+  resetRow.style.display = 'none';
+  untertitelText.textContent = 'Italienisch';
+
+  const namen = Object.keys(AKTIVE_DATEI);
+  const kacheln = namen.map(n => `
+    <div class="niveau-btn eigene" data-deck="${n.replace(/"/g,'&quot;')}">
+      <span class="label">${n}</span>
+      <span class="desc">${AKTIVE_DATEI[n].length} Vokabeln</span>
+    </div>
+  `).join('');
+
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">Welches Deck möchtest du lernen?</div>
+      <div class="niveau-unter">Jede Kachel entspricht einem Arbeitsblatt deiner Datei.</div>
+      <div class="niveau-optionen">${kacheln}</div>
+    </div>
+  `;
+
+  stage.querySelectorAll('[data-deck]').forEach(el => {
+    el.onclick = () => waehleDeck(el.getAttribute('data-deck'));
+  });
+}
+
+function zeigeUploadScreen(){
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">Vokabel-Datei hochladen</div>
+      <div class="niveau-unter">XLSX mit deinen Vokabeln — jedes Arbeitsblatt wird zu einem eigenen Deck. Spalten: <strong>it, de</strong> (kat, notiz1, notiz2 optional).</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">Datei antippen &amp; auswählen<br><strong>.xlsx</strong></div>
+      </div>
+      <div class="upload-fehler" id="uploadFehler"></div>
+      <div class="upload-info">
+        Benötigte Spalten: <strong>it</strong> (Italienisch) · <strong>de</strong> (Deutsch)<br>
+        Optional: <strong>kat</strong> (Kategorie) · <strong>notiz1</strong>, <strong>notiz2</strong> (eigene Anmerkungen, eigene Kartenseite -- notiz1 oben, notiz2 unten). Verben werden automatisch am italienischen Wort erkannt.
+      </div>
+      <div style="margin-top:16px;">
+        <button id="btnZurueck" style="box-shadow:3px 3px 0 var(--inchiostro); font-size:13px; padding:10px 0;">← Abbrechen</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnZurueck').onclick = () => {
+    if(AKTIVE_DATEI) zeigeDeckAuswahl(); else zeigeLeerenZustand();
+  };
+
+  const fileInput = document.getElementById('fileInput');
+  const uploadZone = document.getElementById('uploadZone');
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag');
+    if(e.dataTransfer.files[0]) verarbeiteDatei(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if(fileInput.files[0]) verarbeiteDatei(fileInput.files[0]);
+  });
+}
+
+function zeigeUploadFehler(msg){
+  const el = document.getElementById('uploadFehler');
+  if(el){ el.textContent = msg; el.style.display = 'block'; }
+}
+
+// ---------- Datei einlesen ----------
+async function verarbeiteDatei(file){
+  const fehlerEl = document.getElementById('uploadFehler');
+  if(fehlerEl) fehlerEl.style.display = 'none';
+
+  const name = file.name.toLowerCase();
+  if(!name.endsWith('.xlsx') && !name.endsWith('.xls')){
+    zeigeUploadFehler('Bitte nur .xlsx Dateien hochladen.');
+    return;
+  }
+
+  let decks;
+  try{
+    decks = await leseXLSXDatei(file);
+  } catch(e){
+    zeigeUploadFehler('Fehler beim Lesen der Datei: ' + e.message);
+    return;
+  }
+
+  const namen = Object.keys(decks);
+  if(namen.length === 0){
+    zeigeUploadFehler('Keine gültigen Arbeitsblätter gefunden. Jedes Blatt braucht Spalten "it" und "de".');
+    return;
+  }
+
+  await loescheAltenFortschritt();
+  await speichereDatei(decks);
+  AKTIVE_DATEI = decks;
+  zeigeDeckAuswahl();
+}
+
+// Sucht in den ersten Zeilen eines Blatts die Header-Zeile (Zellen "it" und "de")
+// und liest ab dort die Datensätze ein. So funktioniert es auch, wenn vor dem
+// Header noch Titel-/Erklärzeilen stehen (wie in der Vorlage). "typ" wird nicht
+// mehr aus der Datei gelesen — erkenneTyp() bestimmt ihn automatisch aus "it".
+function parseSheet(zeilen){
+  let headerIdx = -1, itIdx = -1, deIdx = -1, katIdx = -1, notiz1Idx = -1, notiz2Idx = -1;
+  for(let i = 0; i < Math.min(zeilen.length, 15); i++){
+    const zeile = zeilen[i].map(z => (z||'').toString().trim().toLowerCase());
+    const itPos = zeile.indexOf('it');
+    const dePos = zeile.indexOf('de');
+    if(itPos !== -1 && dePos !== -1){
+      headerIdx = i; itIdx = itPos; deIdx = dePos;
+      katIdx = zeile.indexOf('kat');
+      // "notiz1" ist der aktuelle Spaltenname. Ältere xlsx-Dateien (z.B. die
+      // ursprüngliche Vorlage) nutzen noch "notizen" -- wird dann als notiz1
+      // gelesen, damit bestehende Dateien beim Import nichts verlieren.
+      notiz1Idx = zeile.indexOf('notiz1');
+      if(notiz1Idx === -1) notiz1Idx = zeile.indexOf('notizen');
+      notiz2Idx = zeile.indexOf('notiz2');
+      break;
+    }
+  }
+  if(headerIdx === -1) return [];
+
+  const result = [];
+  for(let i = headerIdx + 1; i < zeilen.length; i++){
+    const row = zeilen[i];
+    const it = (row[itIdx]||'').toString().trim();
+    const de = (row[deIdx]||'').toString().trim();
+    if(!it || !de) continue;
+    // Lange Texte sind vermutlich Erklär-/Platzhaltertext, kein echtes Vokabelpaar
+    if(it.length > 40 || de.length > 40) continue;
+    // Eine "kat"-Zelle mit Klammern (z.B. "Kategorie (optional)") verrät eine
+    // Beschreibungszeile aus einer Vorlage, keinen echten Kategorienamen.
+    // Achtung: dieser Filter gilt NUR für kat, nicht für die Notiz-Spalten -- eigene
+    // Notizen dürfen völlig legitim Klammern enthalten.
+    const katRoh = katIdx !== -1 ? (row[katIdx]||'').toString() : '';
+    if(katRoh.includes('(')) continue;
+    result.push({
+      it,
+      de,
+      kat: katIdx !== -1 ? (katRoh.trim() || 'Eigene') : 'Eigene',
+      notiz1: notiz1Idx !== -1 ? (row[notiz1Idx]||'').toString().trim() : '',
+      notiz2: notiz2Idx !== -1 ? (row[notiz2Idx]||'').toString().trim() : '',
+      typ: erkenneTyp(it)
+    });
+  }
+  return result;
+}
+
+function leseXLSXDatei(file){
+  return new Promise((resolve, reject) => {
+    if(window.XLSX){
+      _parseWorkbook(file, resolve, reject);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => _parseWorkbook(file, resolve, reject);
+      script.onerror = () => reject(new Error('SheetJS-Bibliothek konnte nicht geladen werden.'));
+      document.head.appendChild(script);
+    }
+  });
+}
+
+function _parseWorkbook(file, resolve, reject){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const decks = {};
+      for(const blattname of wb.SheetNames){
+        const ws = wb.Sheets[blattname];
+        const zeilen = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        const eintraege = parseSheet(zeilen);
+        if(eintraege.length > 0) decks[blattname] = eintraege;
+      }
+      resolve(decks);
+    } catch(err){ reject(err); }
+  };
+  reader.onerror = () => reject(new Error('Datei konnte nicht gelesen werden.'));
+  reader.readAsArrayBuffer(file);
+}
+
+async function waehleDeck(name){
+  DECK_NAME = name;
+  await ladeFortschritt(name);
+  zeigeRichtungsAuswahl();
+}
+
+function zeigeRichtungsAuswahl(){
+  statsRow.style.display = 'none';
+  resetRow.style.display = 'none';
+  untertitelText.textContent = `Deck · ${DECK_NAME}`;
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">In welche Richtung möchtest du lernen?</div>
+      <div class="niveau-unter">${AKTIVE_DATEI[DECK_NAME].length} Vokabeln aus „${DECK_NAME}“.</div>
+      <div class="niveau-optionen">
+        <div class="niveau-btn a1" id="btnItDe">
+          <span class="label">IT → DE</span>
+          <span class="desc">Italienisches Wort sehen, deutsche Übersetzung erraten</span>
+        </div>
+        <div class="niveau-btn a2" id="btnDeIt">
+          <span class="label">DE → IT</span>
+          <span class="desc">Deutsches Wort sehen, italienische Übersetzung erraten</span>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnItDe').onclick = () => waehleRichtung('it-de');
+  document.getElementById('btnDeIt').onclick = () => waehleRichtung('de-it');
+}
+
+function waehleRichtung(richtung){
+  RICHTUNG = richtung;
+  zeigeSortierAuswahl();
+}
+
+function zeigeSortierAuswahl(){
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">Sortiert oder gemischt lernen?</div>
+      <div class="niveau-unter">Sortiert = Reihenfolge wie in deiner Datei. Gemischt = zufällige Reihenfolge.</div>
+      <div class="niveau-optionen">
+        <div class="niveau-btn a1" id="btnSortiert">
+          <span class="label">Sortiert</span>
+          <span class="desc">Genau wie in der xlsx</span>
+        </div>
+        <div class="niveau-btn a2" id="btnGemischt">
+          <span class="label">Gemischt</span>
+          <span class="desc">Zufällige Reihenfolge</span>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnSortiert').onclick = () => waehleSortierung(true);
+  document.getElementById('btnGemischt').onclick = () => waehleSortierung(false);
+}
+
+function waehleSortierung(sortiert){
+  SORTIERT = sortiert;
+  VOKABELN = vokabelnNeuLaden();
+  statsRow.style.display = 'flex';
+  resetRow.style.display = 'block';
+  aktualisiereStats();
+  render();
+}
+
+function gibFaceHTML(v, zustand){
+  // Bei RICHTUNG === 'de-it' wird die Frage-/Antwort-Seite gegenüber
+  // dem Standardfall ('it-de') einfach vertauscht.
+  const frage = RICHTUNG === 'de-it' ? v.de : v.it;
+  const antwort = RICHTUNG === 'de-it' ? v.it : v.de;
+  // Kleiner Hinweis oben rechts, dass es zu diesem Wort eine eigene Notiz gibt.
+  // Nur auf front/back/konjugation -- auf der Notiz-Seite selbst wäre er redundant.
+  const notizBadge = hatNotiz(v) ? '<div class="notiz-badge">N</div>' : '';
+
+  if(zustand === 0){
+    // frage ist bei IT->DE Italienisch, bei DE->IT Deutsch (siehe oben) --
+    // genau wie beim Beispielsatz auf der Rückseite muss die Sprache des Satzes
+    // zur Sprache des gerade gezeigten Worts passen.
+    const frageSprache = RICHTUNG === 'de-it' ? 'de' : 'it';
+    const beispielSatzFrage = gibBeispiel(v, frageSprache);
+    const beispielHTMLFrage = beispielSatzFrage ? `<div class="beispiel">${beispielSatzFrage}</div>` : '';
+    return `<div class="face front">
+      <div class="kategorie">${v.kat}</div>
+      ${notizBadge}
+      <div class="wort">${frage}</div>
+      ${beispielHTMLFrage}
+      <div class="hinweis">Antippen für die Übersetzung</div>
+    </div>`;
+  }
+  if(zustand === 1){
+    const naechsterHinweis = istVerb(v)
+      ? '<div class="hinweis" style="opacity:0.5">Antippen für die Konjugation</div>'
+      : (hatNotiz(v) ? '<div class="hinweis" style="opacity:0.5">Antippen für deine Notiz</div>' : '');
+    // gibBeispiel() liefert bei Nomen/Adjektiven/Sonstigem jetzt einen leeren String --
+    // die beispiel-Div soll dann komplett wegfallen, nicht als leeres <div></div> im DOM stehen.
+    // antwort ist bei IT->DE Deutsch, bei DE->IT Italienisch (siehe oben) --
+    // der Beispielsatz muss in derselben Sprache stehen wie das Wort, unter dem er steht.
+    const antwortSprache = RICHTUNG === 'de-it' ? 'it' : 'de';
+    const beispielSatz = gibBeispiel(v, antwortSprache);
+    const beispielHTML = beispielSatz ? `<div class="beispiel">${beispielSatz}</div>` : '';
+    return `<div class="face back">
+      <div class="kategorie">${v.kat}</div>
+      ${notizBadge}
+      <div class="wort">${antwort}</div>
+      ${beispielHTML}
+      ${naechsterHinweis}
+    </div>`;
+  }
+  if(istVerb(v) && zustand === 2){
+    // Konjugation ist immer italienisch, unabhängig von der gewählten Lernrichtung
+    const formen = konjugiere(v.it, v.typ);
+    const zeilen = PRONOMEN.map((p,i) => `<tr><td class="pron">${p}</td><td class="form">${formen[i]}</td></tr>`).join('');
+    const hinweis = hatNotiz(v) ? '<div class="hinweis" style="opacity:0.5">Antippen für deine Notiz</div>' : '';
+    return `<div class="face konjugation">
+      <div class="kategorie">Konjugation · Presente</div>
+      ${notizBadge}
+      <div class="wort" style="font-size:24px; margin-bottom:4px;">${v.it}</div>
+      <table class="konj-tabelle">${zeilen}</table>
+      ${hinweis}
+    </div>`;
+  }
+  // Letzter möglicher Zustand: die eigene Notiz (Position variiert, siehe maxZustandFuer).
+  // Zweigeteilt: notiz1 immer oben, notiz2 immer unten. Trennlinie nur, wenn
+  // wirklich beide Felder gefüllt sind -- bei nur einem gefüllten Feld wäre eine
+  // Linie ohne Gegenstück nur verwirrend.
+  const beideVorhanden = v.notiz1 && v.notiz2;
+  return `<div class="face notiz">
+    <div class="kategorie">Notiz</div>
+    <div class="notiz-doppelt">
+      ${v.notiz1 ? `<div class="notiz-abschnitt"><div class="notiz-text">${v.notiz1}</div></div>` : ''}
+      ${beideVorhanden ? '<div class="notiz-trenner"></div>' : ''}
+      ${v.notiz2 ? `<div class="notiz-abschnitt"><div class="notiz-text">${v.notiz2}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function render(){
+  if(idx >= VOKABELN.length){
+    stage.innerHTML = `
+      <div class="fertig">
+        <div class="wort">Stapel geschafft 🇮🇹</div>
+        <p>${punkte.heute} Karten heute gelernt.</p>
+        <button id="nochmal" style="box-shadow:3px 3px 0 var(--inchiostro)">Von vorne beginnen</button>
+        <div class="reset-row" style="margin-top:14px;"><a id="zurueckZurLetzten">← Zur letzten Karte zurück</a></div>
+      </div>`;
+    document.getElementById('nochmal').onclick = () => { idx = 0; VOKABELN = vokabelnNeuLaden(); speichereFortschritt(); render(); };
+    document.getElementById('zurueckZurLetzten').onclick = () => { idx = VOKABELN.length - 1; render(); };
+    return;
+  }
+
+  const v = VOKABELN[idx];
+  zustand = 0;
+
+  stage.innerHTML = `
+    <div class="deck-label">${idx+1} / ${VOKABELN.length} · ${DECK_NAME} · ${RICHTUNG === 'de-it' ? 'DE→IT' : 'IT→DE'}</div>
+    <div class="card" id="karte">
+      ${gibFaceHTML(v, 0)}
+    </div>
+    <div class="controls">
+      <button class="btn-zurueck" id="btnZurueckKarte" ${idx === 0 ? 'disabled' : ''}>← Zurück</button>
+      <button class="btn-weiter" id="btnWeiter">Weiter →</button>
+    </div>
+  `;
+
+  const karte = document.getElementById('karte');
+  karte.onclick = () => {
+    const maxZustand = maxZustandFuer(v);
+    zustand = (zustand + 1) > maxZustand ? 0 : zustand + 1;
+    karte.innerHTML = gibFaceHTML(v, zustand);
+    const faceEl = karte.querySelector('.face');
+    faceEl.classList.add('eintretend');
+    requestAnimationFrame(() => faceEl.classList.remove('eintretend'));
+  };
+
+  document.getElementById('btnWeiter').onclick = (e) => { e.stopPropagation(); weiter(); };
+  document.getElementById('btnZurueckKarte').onclick = (e) => { e.stopPropagation(); vorherige(); };
+}
+
+function weiter(){
+  punkte.heute++;
+  idx++;
+  speichereFortschritt();
+  aktualisiereStats();
+  render();
+}
+
+// Eine Karte zurückspringen. idx wird nie unter 0 gesetzt -- der Zurück-Button
+// ist bei der ersten Karte ohnehin deaktiviert (siehe render()), das hier ist
+// nur eine zusätzliche Absicherung. punkte.heute wird bewusst NICHT verringert:
+// Zurückblättern ist kein "Rückgängigmachen" des Lernens, sondern nur Navigation.
+function vorherige(){
+  if(idx === 0) return;
+  idx--;
+  speichereFortschritt();
+  render();
+}
+
+document.getElementById('resetLink').onclick = async () => {
+  idx = 0;
+  VOKABELN = vokabelnNeuLaden();
+  punkte = { heute:0 };
+  await speichereFortschritt();
+  aktualisiereStats();
+  render();
+};
+
+document.getElementById('deckLink').onclick = () => {
+  zeigeDeckAuswahl();
+};
+
+document.getElementById('linkVokabelnLaden').onclick = () => {
+  zeigeUploadScreen();
+};
+
+(async function init(){
+  statsRow.style.display = 'none';
+  resetRow.style.display = 'none';
+  const gespeicherteDatei = await ladeDatei();
+  if(gespeicherteDatei && Object.keys(gespeicherteDatei).length > 0){
+    AKTIVE_DATEI = gespeicherteDatei;
+    zeigeDeckAuswahl();
+  } else {
+    zeigeLeerenZustand();
+  }
+})();
+</script>
+</body>
+</html>
