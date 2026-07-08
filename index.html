@@ -1,6 +1,47 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<!--
+  VocabolarIo -- Changelog
+  ========================
+  Hinweis: APP_VERSION und dieser Changelog-Kommentar gab es bisher noch
+  nicht in dieser Datei -- ab V16 neu eingeführt, rückwirkend kurz notiert.
+
+  V20: Warnungstext beim App-Reset gekürzt ("VocabolarIo wirklich
+       zurücksetzen?"). "VocabolarIo"-Schriftzug oben links jetzt klickbar
+       (Home-Funktion, wie "Deck wechseln", mit Fallback auf den leeren
+       Startzustand falls noch keine Datei geladen ist). Beschreibungstext
+       bei "Sortiert" geändert zu "Immer gleiche Reihenfolge".
+  V19: Neuer "Liste"-Button auf der Sortier-Auswahl -- zeigt das Deck als
+       Tabelle (nur it/de, Reihenfolge nach gewählter Richtung). Abstand vor
+       "App zurücksetzen" wieder verkleinert (jetzt bündig unter der letzten
+       Deck-Kachel statt abgesetzt).
+  V18: Natives confirm() beim App-Reset durch eigenes, gestyltes
+       Bestätigungs-Dialogfeld ersetzt (zeigeBestaetigung()). Abstand vor
+       "App zurücksetzen" vergrößert (deutlicher abgesetzt).
+  V17: "App zurücksetzen" nur noch auf der Deck-Auswahl sichtbar (zentriert
+       unter den Kacheln, nicht mehr in der globalen Fußzeile). Richtungs-
+       und Sortier-Auswahl: Erklärtexte entfernt, beide Buttons pro Screen
+       jetzt farblich identisch (var(--mare), vorher unterschiedlich).
+  V16: "App zurücksetzen" ergänzt (löscht vocab-datei + alle
+       vocab-progress-*-Keys, danach location.reload()). APP_VERSION
+       eingeführt.
+  V15: Laden-Hub: "Eigene Vokabeln laden" im selben Kachel-Stil wie die
+       Config-Buttons; Erklärsatz in der Deck-Auswahl entfernt.
+  V14: Neuer "Laden"-Hub -- oben eigene Datei hochladen, unten vordefinierte
+       Vokabelsets aus config.xlsx als Kacheln.
+  V13: GitHub-Raw-URL wird automatisch aus der aktuellen Seiten-Adresse
+       abgeleitet (statt fest codiertem Repo-Namen).
+  V12: "VocabolarIo laden"-Button lädt config.xlsx und zeigt die darin
+       gelisteten Dateien zur Auswahl.
+  V11: Web-App-Manifest + Icons ergänzt (Installierbarkeit auf Android/iOS);
+       fester "VocabolarIo laden"-Button (eine feste Datei).
+  V10: localStorage-Polyfill für window.storage (Persistenz funktioniert
+       jetzt auch außerhalb der Claude-Artefakt-Umgebung, z.B. GitHub Pages).
+  V9 und früher: siehe frühere Dateiversionen (u.a. -care/-gare-Konjugation,
+       Beispielsatz auf der Frage-Seite).
+-->
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Vocabolario — Italienisch lernen</title>
@@ -339,8 +380,56 @@
     margin-top: 4px;
     display:block;
   }
-  .niveau-btn.a1 .label{ color: var(--cielo); }
+  .niveau-btn.a1 .label{ color: var(--mare); }
   .niveau-btn.a2 .label{ color: var(--mare); }
+
+  /* Dritter, dünnerer Button auf der Sortier-Auswahl ("Liste") -- bewusst
+     kompakter und leicht abgesetzt, damit klar ist: andere Kategorie von
+     Aktion als "Sortiert"/"Gemischt" (kein Karteikarten-Modus, sondern
+     eine Tabellenansicht). */
+  .niveau-btn.liste{
+    padding: 10px 20px;
+    text-align:center;
+    border-width: 1px;
+    box-shadow: 2px 2px 0 var(--inchiostro);
+    margin-top: 8px;
+  }
+  .niveau-btn.liste:active{ box-shadow: 1px 1px 0 var(--inchiostro); }
+  .niveau-btn.liste .label{
+    font-size:15px;
+    color: var(--mare);
+  }
+
+  /* Tabellenansicht (Liste) */
+  .liste-wrapper{
+    max-height: 60vh;
+    overflow-y:auto;
+    width:100%;
+    max-width:420px;
+    border: 1.5px solid var(--inchiostro);
+    border-radius: 12px;
+  }
+  .liste-tabelle{
+    width:100%;
+    border-collapse: collapse;
+    font-size:14px;
+  }
+  .liste-tabelle th{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    text-align:left;
+    padding: 9px 12px;
+    border-bottom: 2px solid var(--inchiostro);
+    color: var(--inchiostro);
+    background: var(--carta);
+    position: sticky;
+    top: 0;
+  }
+  .liste-tabelle td{
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(23,50,79,0.12);
+  }
+  .liste-tabelle tr:nth-child(even) td{ background: rgba(63,143,209,0.06); }
   .niveau-wechsel{
     text-align:center;
     margin-top: 12px;
@@ -391,6 +480,49 @@
   }
   .niveau-btn.eigene .label{ color: var(--azzurro); }
 
+  /* Eigenes Bestätigungs-Dialogfeld (ersetzt das native, hässliche confirm()) */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background: rgba(23,50,79,0.55);
+    display:flex; align-items:center; justify-content:center;
+    z-index:1000;
+    padding:20px;
+  }
+  .modal-box{
+    background: var(--carta);
+    border-radius: 18px;
+    padding: 28px 24px;
+    max-width: 340px;
+    width:100%;
+    text-align:center;
+    box-shadow: 5px 5px 0 var(--inchiostro);
+  }
+  .modal-frage{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:16px;
+    color: var(--inchiostro);
+    margin-bottom:22px;
+    line-height:1.45;
+  }
+  .modal-aktionen{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+  }
+  .modal-btn{
+    border:none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-size:14px;
+    font-weight:600;
+    font-family: inherit;
+    cursor:pointer;
+  }
+  .modal-btn:active{ transform: translate(1px,1px); }
+  .modal-abbrechen{ background: #dfe9f2; color: var(--inchiostro); }
+  .modal-bestaetigen{ background: var(--mare); color: #fff; }
+
   /* "Vokabeln laden"-Link, immer zentriert unten, unabhängig vom Zustand */
   .datei-laden-row{
     text-align:center;
@@ -402,6 +534,11 @@
     opacity:0.55;
     text-decoration: underline;
     cursor:pointer;
+  }
+  /* Bewusst blasser als der normale Link -- destruktive Aktion, soll nicht
+     versehentlich angetippt werden, aber trotzdem auffindbar bleiben. */
+  .datei-laden-row a.gefahr{
+    opacity:0.32;
   }
   .datei-laden-fehler{
     background: #e8f1f7;
@@ -415,13 +552,72 @@
     text-align:center;
     display:none;
   }
+
+  /* Laden-Übersicht: eigene Vokabeln (oben) vs. vordefinierte Sets (unten) */
+  .lade-trenner{
+    width:100%;
+    max-width:320px;
+    border:none;
+    border-top:1.5px solid var(--inchiostro);
+    opacity:0.18;
+    margin: 26px 0 16px;
+  }
+  .lade-unterschrift{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    opacity:0.45;
+    margin-bottom:12px;
+    width:100%;
+    max-width:320px;
+    text-align:left;
+  }
+  .lade-liste{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    width:100%;
+    max-width:320px;
+  }
+  /* Bewusst anderer Stil als .niveau-btn: kompakter, mit Icon in einer Zeile,
+     damit auf den ersten Blick klar ist "hier lädt man etwas nach", statt
+     wie bei der Deck-Auswahl ein Inhaltsverzeichnis zu wirken. */
+  .lade-kachel{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-align:left;
+    border: 1.5px solid var(--mare);
+    border-radius: 12px;
+    padding: 12px 16px;
+    background: #eef5fa;
+    cursor:pointer;
+    box-shadow: 3px 3px 0 var(--mare);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .lade-kachel:active{ transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--mare); }
+  .lade-icon{ font-size:18px; flex-shrink:0; }
+  .lade-label{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 15px;
+    color: var(--inchiostro);
+  }
+  .lade-status{
+    font-size:12px;
+    opacity:0.5;
+    text-align:center;
+    width:100%;
+  }
+  .lade-status-fehler{ color: var(--mare); opacity:1; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div>
-      <div class="titel">Vocabolar<em>Io</em></div>
+      <div class="titel" id="logoTitel" style="cursor:pointer;">Vocabolar<em>Io</em></div>
       <div class="untertitel" id="untertitelText">Italienisch</div>
     </div>
   </header>
@@ -433,8 +629,7 @@
   <div class="stage" id="stage"></div>
 
   <div class="reset-row" id="resetRow"><a id="resetLink">Fortschritt zurücksetzen</a> · <a id="deckLink">Deck wechseln</a></div>
-  <div class="datei-laden-row"><a id="linkVokabelnLaden">Vokabeln laden</a> · <a id="linkStandardLaden">VocabolarIo laden</a></div>
-  <div class="datei-laden-fehler" id="standardLadenFehler"></div>
+  <div class="datei-laden-row"><a id="linkLaden">VocabolarIo laden</a></div>
 </div>
 
 <script>
@@ -1153,6 +1348,12 @@ function gibBeispiel(v, sprache){
 }
 
 // ---------- App-Zustand ----------
+// Neu ab hier: APP_VERSION gab es vorher nicht in dieser Datei. Dient als
+// Referenz für den Changelog-Kommentar am Dateikopf und wird beim Start in
+// die Konsole geschrieben -- praktisch, um im Browser (F12) schnell zu
+// sehen, welche Version gerade tatsächlich deployed/geladen ist.
+const APP_VERSION = 'V20';
+
 let AKTIVE_DATEI = null;  // { blattname: [ {it,de,kat,typ}, ... ], ... } — alle Decks der zuletzt geladenen xlsx
 let DECK_NAME = null;     // Name des aktuell gewählten Arbeitsblatts/Decks
 let RICHTUNG = 'it-de';   // 'it-de' = Italienisch zeigen, Deutsch erraten | 'de-it' = umgekehrt
@@ -1232,6 +1433,54 @@ async function loescheAltenFortschritt(){
   }catch(e){}
 }
 
+// ---------- Kompletter App-Reset ----------
+// Eigenes Bestätigungs-Dialogfeld statt des nativen confirm() -- sieht in
+// jedem Browser gleich aus (passt zum Rest der App) statt dem hässlichen,
+// browserabhängigen System-Popup. Als eigene, allgemeine Funktion gebaut
+// (nicht fest in appZuruecksetzen() verdrahtet), falls später an anderer
+// Stelle nochmal eine Bestätigung gebraucht wird.
+//
+// Gibt ein Promise<boolean> zurück, genau wie das normale confirm() einen
+// synchronen boolean liefert -- await zeigeBestaetigung(...) verhält sich
+// im aufrufenden Code also fast identisch zu vorher.
+function zeigeBestaetigung(frage){
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-frage">${frage}</div>
+        <div class="modal-aktionen">
+          <button class="modal-btn modal-abbrechen" id="modalAbbrechen">Abbrechen</button>
+          <button class="modal-btn modal-bestaetigen" id="modalBestaetigen">Zurücksetzen</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const aufraeumen = (ergebnis) => {
+      document.body.removeChild(overlay);
+      resolve(ergebnis);
+    };
+    overlay.querySelector('#modalAbbrechen').onclick = () => aufraeumen(false);
+    overlay.querySelector('#modalBestaetigen').onclick = () => aufraeumen(true);
+    // Klick auf den abgedunkelten Hintergrund (nicht auf die Box selbst)
+    // zählt wie "Abbrechen" -- gängiges Verhalten bei solchen Dialogen.
+    overlay.addEventListener('click', e => { if(e.target === overlay) aufraeumen(false); });
+  });
+}
+
+async function appZuruecksetzen(){
+  const bestaetigt = await zeigeBestaetigung('VocabolarIo wirklich zurücksetzen?');
+  if(!bestaetigt) return;
+
+  try{ await window.storage.delete('vocab-datei'); }catch(e){}
+  await loescheAltenFortschritt();
+
+  location.reload();
+}
+
+
 // ---------- Persistenz: Fortschritt pro Deck ----------
 async function ladeFortschritt(deckName){
   try{
@@ -1291,13 +1540,119 @@ function zeigeDeckAuswahl(){
   stage.innerHTML = `
     <div class="niveau-screen">
       <div class="niveau-frage">Welches Deck möchtest du lernen?</div>
-      <div class="niveau-unter">Jede Kachel entspricht einem Arbeitsblatt deiner Datei.</div>
       <div class="niveau-optionen">${kacheln}</div>
+      <div class="datei-laden-row" style="margin-top:14px;"><a id="linkAppReset" class="gefahr">App zurücksetzen</a></div>
     </div>
   `;
 
   stage.querySelectorAll('[data-deck]').forEach(el => {
     el.onclick = () => waehleDeck(el.getAttribute('data-deck'));
+  });
+
+  document.getElementById('linkAppReset').onclick = () => {
+    appZuruecksetzen();
+  };
+}
+
+// "Laden"-Hub: zwei getrennte Wege, um an Vokabeln zu kommen.
+// 1) Oben, leicht abgesetzt: eigene Datei hochladen (führt zu zeigeUploadScreen()).
+// 2) Unten, per Trennstrich abgetrennt: eine der vordefinierten Dateien aus
+//    config.xlsx laden. Diese Liste wird erst NACH dem Rendern des Bildschirms
+//    asynchron nachgeladen -- so ist "Eigene Vokabeln laden" sofort nutzbar,
+//    auch falls das Nachladen von config.xlsx (Netzwerk!) noch dauert oder
+//    komplett fehlschlägt.
+function zeigeLadenAuswahl(){
+  statsRow.style.display = 'none';
+  resetRow.style.display = 'none';
+  untertitelText.textContent = 'Italienisch';
+
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">Vokabeln laden</div>
+      <div class="lade-liste" style="margin-bottom:0;">
+        <div class="lade-kachel" id="btnEigeneLaden">
+          <span class="lade-icon">📂</span>
+          <span class="lade-label">Eigene Vokabeln laden (eigene xlsx)</span>
+        </div>
+      </div>
+
+      <hr class="lade-trenner">
+
+      <div class="lade-unterschrift">Vordefinierte Vokabelsets laden</div>
+      <div class="lade-liste" id="ladeListe">
+        <div class="lade-status" id="ladeStatus">Lädt Vorlagen …</div>
+      </div>
+      <div class="upload-fehler" id="ladeAuswahlFehler"></div>
+
+      <div style="margin-top:16px;">
+        <button id="btnLadenZurueck" style="box-shadow:3px 3px 0 var(--inchiostro); font-size:13px; padding:10px 0;">← Abbrechen</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnEigeneLaden').onclick = () => {
+    zeigeUploadScreen();
+  };
+  document.getElementById('btnLadenZurueck').onclick = () => {
+    if(AKTIVE_DATEI) zeigeDeckAuswahl(); else zeigeLeerenZustand();
+  };
+
+  ladeConfigVonGithub()
+    .then(eintraege => renderVordefinierteVokabelsets(eintraege))
+    .catch(err => {
+      const statusEl = document.getElementById('ladeStatus');
+      if(statusEl){
+        statusEl.textContent = 'Konnte Vorlagen nicht laden: ' + err.message;
+        statusEl.classList.add('lade-status-fehler');
+      }
+    });
+}
+
+// Rendert die Kacheln der vordefinierten Sets, sobald config.xlsx da ist.
+// Eigene Funktion (statt alles in zeigeLadenAuswahl), weil das Nachladen
+// asynchron passiert -- der Nutzer könnte bis dahin längst weitergeklickt
+// haben, daher der Check "gibt's das Zielelement überhaupt noch".
+function renderVordefinierteVokabelsets(eintraege){
+  const ziel = document.getElementById('ladeListe');
+  if(!ziel) return;
+
+  if(eintraege.length === 0){
+    ziel.innerHTML = `<div class="lade-status">Keine Einträge in config.xlsx gefunden.</div>`;
+    return;
+  }
+
+  const escape = s => s.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+  ziel.innerHTML = eintraege.map((e, i) => `
+    <div class="lade-kachel" data-index="${i}">
+      <span class="lade-icon">📥</span>
+      <span class="lade-label">${escape(e.anzeigename)}</span>
+    </div>
+  `).join('');
+
+  ziel.querySelectorAll('[data-index]').forEach(el => {
+    el.onclick = async () => {
+      const eintrag = eintraege[Number(el.getAttribute('data-index'))];
+      const fehlerEl = document.getElementById('ladeAuswahlFehler');
+      fehlerEl.style.display = 'none';
+      const labelEl = el.querySelector('.lade-label');
+      const textVorher = labelEl.textContent;
+      labelEl.textContent = 'Lädt …';
+      try{
+        const decks = await ladeVokabelDateiVonGithub(eintrag.dateiname);
+        if(Object.keys(decks).length === 0){
+          throw new Error('Datei gefunden, aber keine gültigen Arbeitsblätter darin.');
+        }
+        await loescheAltenFortschritt();
+        await speichereDatei(decks);
+        AKTIVE_DATEI = decks;
+        zeigeDeckAuswahl();
+      } catch(err){
+        labelEl.textContent = textVorher;
+        fehlerEl.textContent = 'Konnte "' + eintrag.dateiname + '" nicht laden: ' + err.message;
+        fehlerEl.style.display = 'block';
+      }
+    };
   });
 }
 
@@ -1322,7 +1677,7 @@ function zeigeUploadScreen(){
     </div>
   `;
   document.getElementById('btnZurueck').onclick = () => {
-    if(AKTIVE_DATEI) zeigeDeckAuswahl(); else zeigeLeerenZustand();
+    zeigeLadenAuswahl();
   };
 
   const fileInput = document.getElementById('fileInput');
@@ -1443,7 +1798,7 @@ function ladeSheetJSBibliothek(){
 
 // Gemeinsame Kernlogik: fertiges Workbook (von XLSX.read()) -> Deck-Struktur.
 // Genutzt sowohl vom Datei-Upload (_parseWorkbook) als auch vom GitHub-Import
-// (ladeVocabolarioVonGithub), damit die Umwandlung nur an einer Stelle steht.
+// (ladeVokabelDateiVonGithub), damit die Umwandlung nur an einer Stelle steht.
 function deckAusWorkbook(wb){
   const decks = {};
   for(const blattname of wb.SheetNames){
@@ -1475,23 +1830,59 @@ function _parseWorkbook(file, resolve, reject){
   reader.readAsArrayBuffer(file);
 }
 
-// ---------- VocabolarIo-Datei direkt von GitHub laden ----------
-// Fester Dateiname/Pfad, wie gewünscht: im Repo liegt sie immer als
-// "vocabolario.xlsx" im Root des main-Branchs. raw.githubusercontent.com
-// liefert die Rohdatei (nicht die HTML-Ansichtsseite von github.com) und
-// setzt CORS-Header, die fetch() von einer anderen Domain aus erlauben.
-const VOCABOLARIO_GITHUB_URL = 'https://raw.githubusercontent.com/CB-OS1/vocabolario/main/vocabolario.xlsx';
+// ---------- Dateien direkt von GitHub laden (config.xlsx + Vokabeldateien) ----------
+// Gemeinsame Basis-URL: alle Dateien liegen im Root des main-Branchs.
+// raw.githubusercontent.com liefert die Rohdatei (nicht die HTML-Ansichtsseite
+// von github.com) und setzt CORS-Header, die fetch() von einer anderen Domain
+// (deiner github.io-Seite) aus erlauben.
+//
+// Statt Benutzername/Repo fest einzutragen, leiten wir beides aus der
+// aktuellen Seiten-URL ab (window.location). Vorteil: derselbe Code
+// funktioniert unverändert in jedem Repo -- auch in einem separaten
+// Test-Repo wie "vocabolario_test" -- ohne dass hier je eine URL von Hand
+// angepasst werden muss.
+// Erwartetes Format: https://BENUTZERNAME.github.io/REPO-NAME/...
+function ermittleGithubRawBasis(){
+  const benutzername = window.location.hostname.split('.')[0]; // "cb-os1" aus "cb-os1.github.io"
+  const pfadTeile = window.location.pathname.split('/').filter(Boolean);
+  const repo = pfadTeile[0] || '';
+  return `https://raw.githubusercontent.com/${benutzername}/${repo}/main/`;
+}
+const GITHUB_RAW_BASIS = ermittleGithubRawBasis();
 
-async function ladeVocabolarioVonGithub(){
+// Lädt eine beliebige Datei aus dem Repo per Dateinamen und gibt das fertig
+// eingelesene Workbook zurück. Wird sowohl vom Config-Import als auch vom
+// Vokabeldatei-Import genutzt (DRY: Fetch+Fehlerbehandlung nur an einer Stelle).
+async function ladeDateiVonGithub(dateiname){
   await ladeSheetJSBibliothek();
-  const res = await fetch(VOCABOLARIO_GITHUB_URL);
+  const res = await fetch(GITHUB_RAW_BASIS + encodeURIComponent(dateiname));
   if(!res.ok){
-    throw new Error('Datei nicht gefunden (Status ' + res.status + '). Liegt "vocabolario.xlsx" im Repo?');
+    throw new Error('"' + dateiname + '" nicht gefunden (Status ' + res.status + ').');
   }
   const buffer = await res.arrayBuffer();
-  const wb = XLSX.read(buffer, {type:'array'});
+  return XLSX.read(buffer, {type:'array'});
+}
+
+// Liest config.xlsx (erstes Arbeitsblatt, Spalten "Anzeigename"/"Dateiname")
+// und gibt eine Liste sauberer Einträge zurück, leere/kaputte Zeilen werden
+// rausgefiltert.
+async function ladeConfigVonGithub(){
+  const wb = await ladeDateiVonGithub('config.xlsx');
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const zeilen = XLSX.utils.sheet_to_json(ws, {defval:''});
+  return zeilen
+    .map(z => ({
+      anzeigename: String(z['Anzeigename'] || '').trim(),
+      dateiname: String(z['Dateiname'] || '').trim()
+    }))
+    .filter(e => e.anzeigename && e.dateiname);
+}
+
+async function ladeVokabelDateiVonGithub(dateiname){
+  const wb = await ladeDateiVonGithub(dateiname);
   return deckAusWorkbook(wb);
 }
+
 
 async function waehleDeck(name){
   DECK_NAME = name;
@@ -1506,7 +1897,6 @@ function zeigeRichtungsAuswahl(){
   stage.innerHTML = `
     <div class="niveau-screen">
       <div class="niveau-frage">In welche Richtung möchtest du lernen?</div>
-      <div class="niveau-unter">${AKTIVE_DATEI[DECK_NAME].length} Vokabeln aus „${DECK_NAME}“.</div>
       <div class="niveau-optionen">
         <div class="niveau-btn a1" id="btnItDe">
           <span class="label">IT → DE</span>
@@ -1532,21 +1922,66 @@ function zeigeSortierAuswahl(){
   stage.innerHTML = `
     <div class="niveau-screen">
       <div class="niveau-frage">Sortiert oder gemischt lernen?</div>
-      <div class="niveau-unter">Sortiert = Reihenfolge wie in deiner Datei. Gemischt = zufällige Reihenfolge.</div>
       <div class="niveau-optionen">
         <div class="niveau-btn a1" id="btnSortiert">
           <span class="label">Sortiert</span>
-          <span class="desc">Genau wie in der xlsx</span>
+          <span class="desc">Immer gleiche Reihenfolge</span>
         </div>
         <div class="niveau-btn a2" id="btnGemischt">
           <span class="label">Gemischt</span>
           <span class="desc">Zufällige Reihenfolge</span>
+        </div>
+        <div class="niveau-btn liste" id="btnListe">
+          <span class="label">Liste</span>
         </div>
       </div>
     </div>
   `;
   document.getElementById('btnSortiert').onclick = () => waehleSortierung(true);
   document.getElementById('btnGemischt').onclick = () => waehleSortierung(false);
+  document.getElementById('btnListe').onclick = () => zeigeListenAnsicht();
+}
+
+// Zeigt das komplette Deck als Tabelle (nur Spalten it/de, alle anderen
+// Spalten -- kat, notiz1, notiz2, typ -- werden hier bewusst ignoriert).
+// Reihenfolge der beiden Spalten richtet sich nach RICHTUNG, das auf dem
+// vorherigen Screen (Richtungs-Auswahl) gewählt wurde -- so entspricht die
+// Liste optisch demselben "Frage zuerst"-Prinzip wie die Karteikarten.
+// Nutzt bewusst die ORIGINAL-Reihenfolge aus der xlsx (nicht VOKABELN, das
+// bei "Gemischt" durchmischt sein könnte) -- eine Liste als Nachschlagewerk
+// sollte unabhängig von der Karteikarten-Reihenfolge stabil bleiben.
+function zeigeListenAnsicht(){
+  statsRow.style.display = 'none';
+  resetRow.style.display = 'none';
+  untertitelText.textContent = `Deck · ${DECK_NAME}`;
+
+  const ersteSpalte = RICHTUNG === 'de-it' ? 'de' : 'it';
+  const zweiteSpalte = RICHTUNG === 'de-it' ? 'it' : 'de';
+  const ersteName = RICHTUNG === 'de-it' ? 'Deutsch' : 'Italienisch';
+  const zweiteName = RICHTUNG === 'de-it' ? 'Italienisch' : 'Deutsch';
+
+  const escape = s => String(s || '').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+  const zeilen = AKTIVE_DATEI[DECK_NAME].map(v => `
+    <tr><td>${escape(v[ersteSpalte])}</td><td>${escape(v[zweiteSpalte])}</td></tr>
+  `).join('');
+
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">${DECK_NAME}</div>
+      <div class="liste-wrapper">
+        <table class="liste-tabelle">
+          <thead><tr><th>${ersteName}</th><th>${zweiteName}</th></tr></thead>
+          <tbody>${zeilen}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;">
+        <button id="btnListeZurueck" style="box-shadow:3px 3px 0 var(--inchiostro); font-size:13px; padding:10px 0;">← Zurück</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnListeZurueck').onclick = () => zeigeSortierAuswahl();
 }
 
 function waehleSortierung(sortiert){
@@ -1703,36 +2138,22 @@ document.getElementById('deckLink').onclick = () => {
   zeigeDeckAuswahl();
 };
 
-document.getElementById('linkVokabelnLaden').onclick = () => {
-  zeigeUploadScreen();
+// "VocabolarIo"-Schriftzug oben links fungiert wie eine Home-Taste.
+// Anders als "deckLink" (der nur sichtbar ist, wenn schon ein Deck aktiv
+// ist) ist der Titel auf JEDEM Bildschirm sichtbar -- auch bevor überhaupt
+// eine Datei geladen wurde. Deshalb hier zusätzlich abgesichert: ohne
+// geladene Datei zurück zum leeren Startzustand statt zu einem Absturz,
+// weil zeigeDeckAuswahl() ohne AKTIVE_DATEI nicht funktionieren würde.
+document.getElementById('logoTitel').onclick = () => {
+  if(AKTIVE_DATEI) zeigeDeckAuswahl(); else zeigeLeerenZustand();
 };
 
-document.getElementById('linkStandardLaden').onclick = async () => {
-  const link = document.getElementById('linkStandardLaden');
-  const fehlerEl = document.getElementById('standardLadenFehler');
-  fehlerEl.style.display = 'none';
-
-  const textVorher = link.textContent;
-  link.textContent = 'Lädt …';
-  try{
-    const decks = await ladeVocabolarioVonGithub();
-    const namen = Object.keys(decks);
-    if(namen.length === 0){
-      throw new Error('Datei gefunden, aber keine gültigen Arbeitsblätter darin (Spalten "it"/"de" fehlen).');
-    }
-    await loescheAltenFortschritt();
-    await speichereDatei(decks);
-    AKTIVE_DATEI = decks;
-    zeigeDeckAuswahl();
-  } catch(e){
-    fehlerEl.textContent = 'Konnte VocabolarIo nicht laden: ' + e.message;
-    fehlerEl.style.display = 'block';
-  } finally {
-    link.textContent = textVorher;
-  }
+document.getElementById('linkLaden').onclick = () => {
+  zeigeLadenAuswahl();
 };
 
 (async function init(){
+  console.log('VocabolarIo', APP_VERSION);
   statsRow.style.display = 'none';
   resetRow.style.display = 'none';
   const gespeicherteDatei = await ladeDatei();
